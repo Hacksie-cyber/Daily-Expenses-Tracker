@@ -3,711 +3,295 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daily Expense Tracker</title>
+    <title>Daily Expenses Tracker</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         body {
-            transition: background-color 0.5s, color 0.5s;
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(-45deg, #a7f3d0, #bfdbfe, #d1e5ff, #f3e9d1);
+            background-size: 400% 400%;
+            animation: gradient-animation 15s ease infinite;
         }
-        .dark {
-            background-color: #1a202c;
-            color: #e2e8f0;
-        }
-        .light {
-            background-color: #f7fafc;
-            color: #1a202c;
-        }
-        .card {
-            background-color: #2d3748;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            transition: background-color 0.5s, box-shadow 0.5s;
-        }
-        .light .card {
-            background-color: #ffffff;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        input, button, select, textarea {
-            transition: all 0.2s ease-in-out;
-        }
-        .animate-fadeInUp {
-            animation: fadeInUp 0.5s forwards;
-        }
-        .animate-fadeOutDown {
-            animation: fadeOutDown 0.5s forwards;
-        }
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
+
+        @keyframes gradient-animation {
+            0% {
+                background-position: 0% 50%;
             }
-            to {
-                opacity: 1;
-                transform: translateY(0);
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
             }
         }
-        @keyframes fadeOutDown {
-            from {
-                opacity: 1;
-                transform: translateY(0);
-            }
-            to {
-                opacity: 0;
-                transform: translateY(20px);
-            }
+
+        .modal {
+            transition: visibility 0.3s, opacity 0.3s linear;
+        }
+        .modal-content {
+            transform: translateY(-20px);
+            transition: transform 0.3s ease-out;
+        }
+        .modal.open .modal-content {
+            transform: translateY(0);
         }
     </style>
 </head>
-<body class="dark font-sans">
+<body class="flex items-center justify-center min-h-screen p-4">
 
-    <div class="container mx-auto p-4 md:p-8 min-h-screen flex flex-col items-center">
-        <!-- Header and Theme Toggle -->
-        <header class="w-full flex justify-between items-center mb-6">
-            <h1 class="text-3xl font-bold flex items-center gap-2">
-                Expense Tracker
-                <!-- Image of a hand holding a coin -->
-            </h1>
-            <button id="themeToggle" class="p-2 rounded-full card focus:outline-none">
-                <svg id="moonIcon" class="w-6 h-6 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M17.293 13.95l-1.414-1.414a8 8 0 01-11.314-11.314l-1.414-1.414a10 10 0 0014.142 14.142zM10 20a10 10 0 110-20 10 10 0 010 20zM10 4a6 6 0 100 12V4z" clip-rule="evenodd" fill-rule="evenodd"></path>
-                </svg>
-                <svg id="sunIcon" class="w-6 h-6 text-gray-500 hidden" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 2a8 8 0 100 16A8 8 0 0010 2zm0 14a6 6 0 110-12 6 6 0 010 12zM12 4a1 1 0 011 1v2a1 1 0 11-2 0V5a1 1 0 011-1zm-4 0a1 1 0 011 1v2a1 1 0 11-2 0V5a1 1 0 011-1zm-4 4a1 1 0 011 1v2a1 1 0 11-2 0V9a1 1 0 011-1zM4 12a1 1 0 011 1v2a1 1 0 11-2 0v-2a1 1 0 011-1zM8 16a1 1 0 011 1v2a1 1 0 11-2 0v-2a1 1 0 011-1zm-4 0a1 1 0 011 1v2a1 1 0 11-2 0v-2a1 1 0 011-1zm8 0a1 1 0 011 1v2a1 1 0 11-2 0v-2a1 1 0 011-1zM16 8a1 1 0 011 1v2a1 1 0 11-2 0V9a1 1 0 011-1z" clip-rule="evenodd"></path>
-                </svg>
-            </button>
-        </header>
-
-        <!-- Main content area -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full max-w-6xl">
-
-            <!-- Expense Input Card -->
-            <div class="card p-6 w-full lg:order-1 order-2">
-                <h2 class="text-2xl font-semibold mb-4">Add Expense</h2>
-                <div class="space-y-4">
-                    <div class="flex flex-col">
-                        <label for="item" class="mb-1 text-sm font-medium">Item Name</label>
-                        <input type="text" id="item" placeholder="e.g., Lunch, Coffee, Groceries" class="card p-3 w-full border border-gray-700 focus:border-blue-500 focus:ring focus:ring-blue-500/50 outline-none">
-                    </div>
-                    <div class="flex flex-col">
-                        <label for="cost" class="mb-1 text-sm font-medium">Cost (₱)</label>
-                        <input type="number" id="cost" placeholder="e.g., 12.50" class="card p-3 w-full border border-gray-700 focus:border-blue-500 focus:ring focus:ring-blue-500/50 outline-none">
-                    </div>
-                    <button id="addExpenseBtn" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900">Add Expense</button>
-                    <button id="resetBtn" class="w-full mt-2 text-sm text-gray-400 hover:text-red-500 focus:outline-none">Reset All Data</button>
-                </div>
-
-                <div class="mt-8">
-                    <h3 class="text-xl font-semibold mb-2">Today's Expenses</h3>
-                    <ul id="expensesList" class="space-y-2">
-                        <!-- Expenses will be dynamically added here -->
-                    </ul>
-                </div>
-                
-                <div class="mt-8">
-                    <h3 class="text-xl font-semibold mb-2">Generate Report</h3>
-                    <div class="flex items-center space-x-2">
-                        <select id="reportPeriod" class="card p-3 rounded-lg border border-gray-700 text-sm focus:outline-none focus:border-blue-500">
-                            <option value="daily">Daily</option>
-                            <option value="weekly">Weekly</option>
-                            <option value="monthly">Monthly</option>
-                            <option value="yearly">Yearly</option>
-                        </select>
-                        <button id="generateReportBtn" class="bg-blue-600 text-white font-medium py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none">Generate</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Statistics and Charts Card -->
-            <div class="card p-6 w-full lg:order-2 order-1 flex flex-col">
-                <h2 class="text-2xl font-semibold mb-4">Expense Statistics</h2>
-                <div class="space-y-4">
-                    <!-- Highlighted Daily Expenses -->
-                    <div class="flex justify-between items-center p-4 bg-blue-600 rounded-lg text-white font-bold">
-                        <span>Total Daily Expenses:</span>
-                        <span id="totalDailyExpenses" class="text-lg">₱0.00</span>
-                    </div>
-                    <!-- Other stats with regular styling -->
-                    <div class="flex justify-between items-center p-3 card mt-4">
-                        <span class="font-medium">Total Weekly Expenses:</span>
-                        <span id="totalWeeklyExpenses" class="text-lg font-bold text-green-500">₱0.00</span>
-                    </div>
-                    <div class="flex justify-between items-center p-3 card mt-4">
-                        <span class="font-medium">Total Monthly Expenses:</span>
-                        <span id="totalMonthlyExpenses" class="text-lg font-bold text-green-500">₱0.00</span>
-                    </div>
-                    <div class="flex justify-between items-center p-3 card mt-4">
-                        <span class="font-medium">Total Yearly Expenses:</span>
-                        <span id="totalYearlyExpenses" class="text-lg font-bold text-green-500">₱0.00</span>
-                    </div>
-                </div>
-
-                <!-- Historical Statistics Section -->
-                <div class="mt-6 pt-6 border-t border-gray-700">
-                    <h2 class="text-2xl font-semibold mb-4">Historical Statistics</h2>
-                    <div class="flex space-x-2 items-center mb-4">
-                        <select id="historicalMonth" class="card p-3 rounded-lg border border-gray-700 text-sm focus:outline-none focus:border-blue-500">
-                            <option value="0">January</option>
-                            <option value="1">February</option>
-                            <option value="2">March</option>
-                            <option value="3">April</option>
-                            <option value="4">May</option>
-                            <option value="5">June</option>
-                            <option value="6">July</option>
-                            <option value="7">August</option>
-                            <option value="8">September</option>
-                            <option value="9">October</option>
-                            <option value="10">November</option>
-                            <option value="11">December</option>
-                        </select>
-                        <input type="number" id="historicalYear" class="card p-3 rounded-lg w-24 border border-gray-700 text-sm focus:outline-none focus:border-blue-500" placeholder="Year">
-                        <button id="viewHistoricalBtn" class="bg-blue-600 text-white font-medium py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none">View</button>
-                    </div>
-                    <div class="flex justify-between items-center p-3 card">
-                        <span id="historicalPeriodText" class="font-medium">Total Expenses:</span>
-                        <span id="totalHistoricalExpenses" class="text-lg font-bold text-green-500">₱0.00</span>
-                    </div>
-                    <!-- Canvas for Historical Chart -->
-                    <div class="mt-6">
-                        <canvas id="historicalChart"></canvas>
-                    </div>
-                </div>
-
-                <!-- Chart Container -->
-                <div class="mt-6 flex-grow flex flex-col justify-center">
-                    <div class="mb-4">
-                        <h3 class="text-xl font-semibold mb-2 text-center">Spending Breakdown</h3>
-                        <canvas id="pieChart"></canvas>
-                    </div>
-                    <div>
-                        <h3 class="text-xl font-semibold mb-2 text-center">Spending Trend by Time</h3>
-                        <canvas id="barChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Notification Message Box -->
-        <div id="messageBox" class="fixed bottom-4 left-1/2 -translate-x-1/2 w-80 p-4 rounded-lg shadow-lg hidden">
-            <p id="messageText" class="text-center font-medium"></p>
-        </div>
-
-        <!-- Reset Confirmation Modal -->
-        <div id="resetModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 hidden flex items-center justify-center">
-            <div class="bg-gray-800 p-8 rounded-lg shadow-xl max-w-sm w-full text-center">
-                <h3 class="text-xl font-semibold mb-4">Are you sure?</h3>
-                <p class="text-gray-400 mb-6">This will permanently delete all your expense data. This cannot be undone.</p>
-                <div class="flex justify-center space-x-4">
-                    <button id="confirmResetBtn" class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 focus:outline-none">Yes, Reset</button>
-                    <button id="cancelResetBtn" class="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 focus:outline-none">Cancel</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Report Modal -->
-        <div id="reportModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 hidden flex items-center justify-center p-4">
-            <div class="bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-2xl">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-xl font-semibold">Expense Report</h3>
-                    <button id="closeReportBtn" class="text-gray-400 hover:text-white">
-                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
-                        </svg>
-                    </button>
-                </div>
-                <textarea id="reportTextarea" class="w-full h-80 p-3 text-sm rounded-lg card resize-none focus:outline-none border border-gray-700 mb-4"></textarea>
-                <div class="flex justify-end space-x-2">
-                    <button id="copyReportBtn" class="bg-gray-600 text-white font-medium py-2 px-4 rounded-lg hover:bg-gray-700 focus:outline-none">Copy Report</button>
-                </div>
-            </div>
+    <!-- Modal for messages -->
+    <div id="messageModal" class="modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 invisible opacity-0">
+        <div class="modal-content bg-white p-6 rounded-xl shadow-lg w-full max-w-sm text-center">
+            <h3 id="modalTitle" class="text-xl font-bold mb-3 text-gray-800"></h3>
+            <p id="modalMessage" class="text-gray-600 mb-4"></p>
+            <button id="closeModalBtn" class="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition duration-300">OK</button>
         </div>
     </div>
 
-    <script type="text/javascript">
-        let expensesData = []; // This will store the data from local storage
-        const LAST_ACCESS_DATE_KEY = 'lastAccessDate';
+    <div id="auth-container" class="w-full max-w-md bg-white rounded-3xl shadow-xl p-8 transform transition-transform duration-500 ease-in-out">
+        <div class="flex justify-center mb-4">
+            <i class="fas fa-chart-line text-blue-600 text-5xl"></i>
+        </div>
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Daily Expenses Tracker</h1>
+        <div id="login-form-container">
+            <h2 class="text-2xl font-semibold text-center text-gray-700 mb-6 flex items-center justify-center space-x-2">
+                <i class="fas fa-lock text-blue-600"></i>
+                <span>Login</span>
+            </h2>
+            <form id="login-form" class="space-y-6">
+                <div>
+                    <label for="login-email" class="block text-gray-700 font-medium mb-2">Email Address</label>
+                    <input type="email" id="login-email" name="email" placeholder="you@example.com" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300">
+                </div>
+                <div class="relative">
+                    <label for="login-password" class="block text-gray-700 font-medium mb-2">Password</label>
+                    <input type="password" id="login-password" name="password" placeholder="••••••••" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300">
+                    <span class="absolute inset-y-0 right-0 top-6 pr-3 flex items-center text-gray-500 cursor-pointer">
+                        <i class="fas fa-eye-slash" id="toggle-login-password"></i>
+                    </span>
+                </div>
+                <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition duration-300">Log In</button>
+            </form>
+            <div class="my-6 flex items-center before:flex-1 before:border-t before:border-gray-300 before:mt-0.5 after:flex-1 after:border-t after:border-gray-300 after:mt-0.5">
+                <p class="text-center text-gray-500 text-sm mx-4">OR</p>
+            </div>
+            <button id="google-login-btn" class="w-full py-3 px-4 flex items-center justify-center space-x-2 bg-white text-gray-700 rounded-lg border border-gray-300 hover:bg-gray-50 transition duration-300 font-semibold shadow-sm">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google logo" class="w-5 h-5">
+                <span>Sign in with Google</span>
+            </button>
+            <p class="mt-6 text-center text-gray-600">
+                Don't have an account? <button id="show-signup-btn" class="text-blue-600 font-semibold hover:text-blue-700 transition duration-300">Sign Up</button>
+            </p>
+        </div>
 
-        // --- UI Element References ---
-        const themeToggle = document.getElementById('themeToggle');
-        const body = document.body;
-        const moonIcon = document.getElementById('moonIcon');
-        const sunIcon = document.getElementById('sunIcon');
-        const addExpenseBtn = document.getElementById('addExpenseBtn');
-        const resetBtn = document.getElementById('resetBtn');
-        const totalDailyExpensesDisplay = document.getElementById('totalDailyExpenses');
-        const totalWeeklyExpensesDisplay = document.getElementById('totalWeeklyExpenses');
-        const totalMonthlyExpensesDisplay = document.getElementById('totalMonthlyExpenses');
-        const totalYearlyExpensesDisplay = document.getElementById('totalYearlyExpenses');
-        const itemInput = document.getElementById('item');
-        const costInput = document.getElementById('cost');
-        const messageBox = document.getElementById('messageBox');
-        const messageText = document.getElementById('messageText');
-        const expensesList = document.getElementById('expensesList');
-        const resetModal = document.getElementById('resetModal');
-        const confirmResetBtn = document.getElementById('confirmResetBtn');
-        const cancelResetBtn = document.getElementById('cancelResetBtn');
-        const reportPeriodSelect = document.getElementById('reportPeriod');
-        const generateReportBtn = document.getElementById('generateReportBtn');
-        const reportTextarea = document.getElementById('reportTextarea');
-        const reportModal = document.getElementById('reportModal');
-        const closeReportBtn = document.getElementById('closeReportBtn');
-        const copyReportBtn = document.getElementById('copyReportBtn');
-        // New UI references
-        const historicalMonthSelect = document.getElementById('historicalMonth');
-        const historicalYearInput = document.getElementById('historicalYear');
-        const viewHistoricalBtn = document.getElementById('viewHistoricalBtn');
-        const historicalPeriodText = document.getElementById('historicalPeriodText');
-        const totalHistoricalExpensesDisplay = document.getElementById('totalHistoricalExpenses');
-        const historicalChartCanvas = document.getElementById('historicalChart');
+        <div id="signup-form-container" class="hidden">
+            <h2 class="text-2xl font-semibold text-center text-gray-700 mb-6 flex items-center justify-center space-x-2">
+                <i class="fas fa-user-plus text-green-600"></i>
+                <span>Sign Up</span>
+            </h2>
+            <form id="signup-form" class="space-y-6">
+                <div>
+                    <label for="signup-email" class="block text-gray-700 font-medium mb-2">Email Address</label>
+                    <input type="email" id="signup-email" name="email" placeholder="you@example.com" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300">
+                </div>
+                <div class="relative">
+                    <label for="signup-password" class="block text-gray-700 font-medium mb-2">Password</label>
+                    <input type="password" id="signup-password" name="password" placeholder="Create a password" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300">
+                    <span class="absolute inset-y-0 right-0 top-6 pr-3 flex items-center text-gray-500 cursor-pointer">
+                        <i class="fas fa-eye-slash" id="toggle-signup-password"></i>
+                    </span>
+                </div>
+                 <div class="relative">
+                    <label for="signup-confirm-password" class="block text-gray-700 font-medium mb-2">Confirm Password</label>
+                    <input type="password" id="signup-confirm-password" name="confirm-password" placeholder="Confirm your password" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300">
+                    <span class="absolute inset-y-0 right-0 top-6 pr-3 flex items-center text-gray-500 cursor-pointer">
+                        <i class="fas fa-eye-slash" id="toggle-confirm-password"></i>
+                    </span>
+                </div>
+                <button type="submit" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 transition duration-300">Sign Up</button>
+            </form>
+            <p class="mt-6 text-center text-gray-600">
+                Already have an account? <button id="show-login-btn" class="text-blue-600 font-semibold hover:text-blue-700 transition duration-300">Log In</button>
+            </p>
+        </div>
+    </div>
 
-        // Chart instances
-        let pieChart, barChart, historicalChart;
+    
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-analytics.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, setDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
 
-        // --- Theme Toggle ---
-        themeToggle.addEventListener('click', () => {
-            body.classList.toggle('dark');
-            body.classList.toggle('light');
-            moonIcon.classList.toggle('hidden');
-            sunIcon.classList.toggle('hidden');
-            updateCharts();
-            updateHistoricalStats();
+        // Set Firebase debug log level
+        setLogLevel('debug');
+
+        const __app_id = "default-app-id";
+        const authContainer = document.getElementById('auth-container');
+        const loginFormContainer = document.getElementById('login-form-container');
+        const signupFormContainer = document.getElementById('signup-form-container');
+        const showSignupBtn = document.getElementById('show-signup-btn');
+        const showLoginBtn = document.getElementById('show-login-btn');
+        const loginForm = document.getElementById('login-form');
+        const signupForm = document.getElementById('signup-form');
+        const messageModal = document.getElementById('messageModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalMessage = document.getElementById('modalMessage');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const googleLoginBtn = document.getElementById('google-login-btn');
+
+        let db, auth;
+
+        // Custom Modal Function
+        function showMessage(title, message) {
+            modalTitle.textContent = title;
+            modalMessage.textContent = message;
+            messageModal.classList.add('open', 'visible', 'opacity-100');
+            messageModal.classList.remove('invisible', 'opacity-0');
+        }
+
+        closeModalBtn.addEventListener('click', () => {
+            messageModal.classList.remove('open', 'visible', 'opacity-100');
+            messageModal.classList.add('invisible', 'opacity-0');
         });
 
-        // --- Utility Functions ---
-        function showMessage(text, isError = false) {
-            messageText.textContent = text;
-            messageBox.style.backgroundColor = isError ? '#ef4444' : '#22c55e';
-            messageBox.style.color = '#fff';
-            messageBox.classList.remove('hidden', 'animate-fadeOutDown');
-            messageBox.classList.add('animate-fadeInUp');
-            setTimeout(() => {
-                messageBox.classList.remove('animate-fadeInUp');
-                messageBox.classList.add('animate-fadeOutDown');
+        // Initialize Firebase with your specific config
+        try {
+            // IMPORTANT: The provided config is used here.
+            const firebaseConfig = {
+                apiKey: "AIzaSyBSEl_DhSpLxQQcLz-mV0jW7yIZfajA8rw",
+                authDomain: "daily-expenses-tracker-19eda.firebaseapp.com",
+                projectId: "daily-expenses-tracker-19eda",
+                storageBucket: "daily-expenses-tracker-19eda.firebasestorage.app",
+                messagingSenderId: "651286490733",
+                appId: "1:651286490733:web:77c0267e72a101547e5964",
+                measurementId: "G-VWCLRRBFKZ"
+            };
+            const app = initializeApp(firebaseConfig);
+            const analytics = getAnalytics(app);
+            db = getFirestore(app);
+            auth = getAuth(app);
+        } catch (e) {
+            console.error("Firebase initialization error:", e);
+            showMessage("Error", "Failed to initialize Firebase. Please check the configuration.");
+        }
+
+        // Listen for Auth State Changes and redirect if authenticated
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                 // Check if we are on the login page and redirect to the dashboard if authenticated
+                if (window.location.pathname.endsWith('index.html') || window.location.pathname === '/') {
+                    window.location.href = 'dashboard.html';
+                }
+            }
+        });
+
+        // Event Listeners for Forms and Buttons
+        showSignupBtn.addEventListener('click', () => {
+            loginFormContainer.classList.add('hidden');
+            signupFormContainer.classList.remove('hidden');
+        });
+
+        showLoginBtn.addEventListener('click', () => {
+            signupFormContainer.classList.add('hidden');
+            loginFormContainer.classList.remove('hidden');
+        });
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = loginForm['login-email'].value;
+            const password = loginForm['login-password'].value;
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+                console.log("Login successful! Redirecting...");
+                showMessage("Login Successful", "You have successfully logged in.");
+                // Redirect to dashboard after a short delay to allow the user to see the message
                 setTimeout(() => {
-                    messageBox.classList.add('hidden');
-                }, 500);
-            }, 3000);
-        }
-
-        // --- Data Storage Functions using localStorage ---
-        function saveExpenses() {
-            localStorage.setItem('expenses', JSON.stringify(expensesData));
-        }
-
-        function loadExpenses() {
-            const storedData = localStorage.getItem('expenses');
-            if (storedData) {
-                expensesData = JSON.parse(storedData);
-            } else {
-                expensesData = [];
-            }
-            
-            // Get today's date in YYYY-MM-DD format
-            const todayStr = new Date().toISOString().split('T')[0];
-            const lastAccessDate = localStorage.getItem(LAST_ACCESS_DATE_KEY);
-
-            // Check if it's a new day
-            if (lastAccessDate !== todayStr) {
-                // It's a new day, clear all daily data
-                expensesData.forEach(day => {
-                    if (day.date === lastAccessDate) {
-                        day.items = [];
-                    }
-                });
-                saveExpenses();
-                showMessage("Daily expenses have been reset for the new day.");
-            }
-            
-            // Store the current date for the next load
-            localStorage.setItem(LAST_ACCESS_DATE_KEY, todayStr);
-
-            // Ensure all loaded items have a time property for the new chart
-            expensesData.forEach(day => {
-                day.items.forEach(item => {
-                    if (!item.time) {
-                        item.time = 'N/A';
-                    }
-                });
-            });
-            // Sort data by date for chronological charts
-            expensesData.sort((a, b) => new Date(a.date) - new Date(b.date));
-            updateCharts();
-            renderTodayExpenses();
-
-            // Set initial values for historical stats selectors
-            const today = new Date();
-            historicalMonthSelect.value = today.getMonth();
-            historicalYearInput.value = today.getFullYear();
-            updateHistoricalStats();
-        }
-
-        addExpenseBtn.addEventListener('click', () => {
-            const item = itemInput.value.trim();
-            const cost = parseFloat(costInput.value);
-
-            if (item && !isNaN(cost) && cost > 0) {
-                const today = new Date().toISOString().split('T')[0];
-                const time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-
-                let todayEntry = expensesData.find(e => e.date === today);
-
-                if (!todayEntry) {
-                    todayEntry = { date: today, items: [] };
-                    expensesData.push(todayEntry);
+                    window.location.href = 'dashboard.html';
+                }, 1500); 
+            } catch (error) {
+                console.error("Login failed: ", error);
+                let message = "Login failed. Please check your email and password and try again.";
+                if (error.code === 'auth/user-not-found') {
+                    message = "Account not found. Please sign up for a new account.";
                 }
-
-                todayEntry.items.push({ name: item, cost: cost, time: time });
-                saveExpenses();
-                loadExpenses(); // Reload data to update UI and charts
-
-                showMessage("Expense added successfully!");
-                itemInput.value = '';
-                costInput.value = '';
-                itemInput.focus();
-            } else {
-                showMessage("Please enter a valid item name and cost.", true);
+                showMessage("Login Failed", message);
             }
         });
 
-        // Reset Data with Modal
-        resetBtn.addEventListener('click', () => {
-            resetModal.classList.remove('hidden');
-        });
+        signupForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = signupForm['signup-email'].value;
+            const password = signupForm['signup-password'].value;
+            const confirmPassword = signupForm['signup-confirm-password'].value;
 
-        confirmResetBtn.addEventListener('click', () => {
-            localStorage.removeItem('expenses');
-            loadExpenses(); // Reload to show empty state
-            showMessage("All data has been reset.");
-            resetModal.classList.add('hidden');
-        });
+            if (password !== confirmPassword) {
+                showMessage("Sign Up Failed", "Passwords do not match. Please try again.");
+                return;
+            }
 
-        cancelResetBtn.addEventListener('click', () => {
-            resetModal.classList.add('hidden');
+            try {
+                await createUserWithEmailAndPassword(auth, email, password);
+                console.log("Sign up successful! Redirecting...");
+                showMessage("Sign Up Successful", "Your account has been created.");
+                 // Redirect to dashboard after a short delay
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 1500); 
+            } catch (error) {
+                console.error("Sign up failed: ", error);
+                let message = "Sign up failed. Please try a different email or password.";
+                if (error.code === 'auth/email-already-in-use') {
+                    message = "This email is already in use. Please log in or use a different email.";
+                } else if (error.code === 'auth/weak-password') {
+                    message = "The password is too weak. Please use a stronger password.";
+                }
+                showMessage("Sign Up Failed", message);
+            }
         });
         
-        // --- Report Generation ---
-        generateReportBtn.addEventListener('click', () => {
-            const period = reportPeriodSelect.value;
-            let reportData = [];
-            const today = new Date();
-
-            switch(period) {
-                case 'daily':
-                    const todayStr = today.toISOString().split('T')[0];
-                    reportData = expensesData.filter(e => e.date === todayStr);
-                    break;
-                case 'weekly':
-                    const weekAgo = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 7);
-                    reportData = expensesData.filter(e => new Date(e.date) >= weekAgo);
-                    break;
-                case 'monthly':
-                    const monthAgo = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate());
-                    reportData = expensesData.filter(e => new Date(e.date) >= monthAgo);
-                    break;
-                case 'yearly':
-                    const yearAgo = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate());
-                    reportData = expensesData.filter(e => new Date(e.date) >= yearAgo);
-                    break;
-            }
-
-            let reportText = `Expense Report (${period})\n\n`;
-            let totalReportExpenses = 0;
-
-            if (reportData.length > 0) {
-                const itemBreakdown = {};
-                reportData.forEach(day => {
-                    reportText += `--- ${day.date} ---\n`;
-                    day.items.forEach(item => {
-                        reportText += `${item.name}: ₱${item.cost.toFixed(2)}\n`;
-                        totalReportExpenses += item.cost;
-                        itemBreakdown[item.name] = (itemBreakdown[item.name] || 0) + item.cost;
-                    });
-                });
-                reportText += `\nTotal for period: ₱${totalReportExpenses.toFixed(2)}\n\n`;
-                reportText += 'Breakdown by Item:\n';
-                for (const item in itemBreakdown) {
-                    reportText += `- ${item}: ₱${itemBreakdown[item].toFixed(2)}\n`;
-                }
-            } else {
-                reportText += "No expenses found for this period.";
-            }
-
-            reportTextarea.value = reportText;
-            reportModal.classList.remove('hidden');
-            showMessage(`Report for ${period} generated.`);
-        });
-
-        closeReportBtn.addEventListener('click', () => {
-            reportModal.classList.add('hidden');
-        });
-
-        copyReportBtn.addEventListener('click', () => {
-            document.execCommand('copy');
-            showMessage("Report copied to clipboard!");
-        });
-
-        // New function to update historical stats AND the new chart
-        function updateHistoricalStats() {
-            const selectedMonth = parseInt(historicalMonthSelect.value);
-            const selectedYear = parseInt(historicalYearInput.value);
-            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-
-            const filteredExpenses = expensesData.filter(e => {
-                const expenseDate = new Date(e.date);
-                return expenseDate.getFullYear() === selectedYear && expenseDate.getMonth() === selectedMonth;
-            });
-
-            const totalHistorical = filteredExpenses.flatMap(e => e.items).reduce((sum, item) => sum + item.cost, 0);
-
-            historicalPeriodText.textContent = `Total Expenses for ${monthNames[selectedMonth]} ${selectedYear}:`;
-            totalHistoricalExpensesDisplay.textContent = `₱${totalHistorical.toFixed(2)}`;
-
-            // Data for the historical chart
-            const dailyTotals = {};
-            filteredExpenses.forEach(dayEntry => {
-                const day = new Date(dayEntry.date).getDate();
-                const total = dayEntry.items.reduce((sum, item) => sum + item.cost, 0);
-                dailyTotals[day] = total;
-            });
-
-            const labels = Object.keys(dailyTotals).map(day => `Day ${day}`);
-            const data = Object.values(dailyTotals);
-
-            const darkTheme = body.classList.contains('dark');
-            const textColor = darkTheme ? '#e2e8f0' : '#1a202c';
-            const gridColor = darkTheme ? '#4a5568' : '#e2e8f0';
-
-            // Destroy existing historical chart instance if it exists
-            if (historicalChart) {
-                historicalChart.destroy();
-            }
-
-            // Create new historical chart instance
-            const historicalCtx = historicalChartCanvas.getContext('2d');
-            historicalChart = new Chart(historicalCtx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: `Daily Expenses in ${monthNames[selectedMonth]}`,
-                        data: data,
-                        backgroundColor: '#4299e1',
-                        borderColor: '#2b6cb0',
-                        borderWidth: 1,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        x: {
-                            ticks: { color: textColor },
-                            grid: { color: gridColor },
-                            title: {
-                                display: true,
-                                text: 'Day of the Month',
-                                color: textColor,
-                            }
-                        },
-                        y: {
-                            ticks: { color: textColor, beginAtZero: true },
-                            grid: { color: gridColor },
-                            title: {
-                                display: true,
-                                text: 'Cost (₱)',
-                                color: textColor,
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            labels: { color: textColor }
-                        }
-                    }
-                }
-            });
+        // Function to toggle password visibility
+        function togglePasswordVisibility(inputElement, iconElement) {
+            const type = inputElement.getAttribute('type') === 'password' ? 'text' : 'password';
+            inputElement.setAttribute('type', type);
+            iconElement.classList.toggle('fa-eye');
+            iconElement.classList.toggle('fa-eye-slash');
         }
 
-        viewHistoricalBtn.addEventListener('click', updateHistoricalStats);
+        // Add event listeners for password visibility toggles
+        const loginPasswordInput = document.getElementById('login-password');
+        const toggleLoginPassword = document.getElementById('toggle-login-password');
+        if (toggleLoginPassword) {
+            toggleLoginPassword.addEventListener('click', () => {
+                togglePasswordVisibility(loginPasswordInput, toggleLoginPassword);
+            });
+        }
         
-        // --- UI Rendering Functions ---
-        function renderTodayExpenses() {
-            expensesList.innerHTML = '';
-            const today = new Date().toISOString().split('T')[0];
-            const todayEntry = expensesData.find(e => e.date === today);
-            
-            if (todayEntry && todayEntry.items && todayEntry.items.length > 0) {
-                todayEntry.items.forEach(item => {
-                    const li = document.createElement('li');
-                    li.className = 'flex justify-between items-center p-2 card text-sm';
-                    li.innerHTML = `
-                        <span class="font-medium">${item.name}</span>
-                        <span class="font-bold text-green-500">₱${item.cost.toFixed(2)}</span>
-                    `;
-                    expensesList.appendChild(li);
-                });
-            } else {
-                const li = document.createElement('li');
-                li.className = 'text-center text-gray-400 p-4';
-                li.textContent = 'No expenses recorded today.';
-                expensesList.appendChild(li);
-            }
-        }
-
-        function updateCharts() {
-            const today = new Date();
-            const todayStr = today.toISOString().split('T')[0];
-
-            // Daily Calculation
-            const todayEntry = expensesData.find(e => e.date === todayStr) || { items: [] };
-            const totalDaily = todayEntry.items.reduce((sum, item) => sum + item.cost, 0);
-            totalDailyExpensesDisplay.textContent = `₱${totalDaily.toFixed(2)}`;
-
-            // Weekly Calculation (last 7 days)
-            const weekAgo = new Date();
-            weekAgo.setDate(today.getDate() - 7);
-            const totalWeekly = expensesData.filter(e => new Date(e.date) >= weekAgo)
-                                            .flatMap(e => e.items)
-                                            .reduce((sum, item) => sum + item.cost, 0);
-            totalWeeklyExpensesDisplay.textContent = `₱${totalWeekly.toFixed(2)}`;
-
-            // Monthly Calculation (current month)
-            const totalMonthly = expensesData.filter(e => {
-                const expenseDate = new Date(e.date);
-                return expenseDate.getFullYear() === today.getFullYear() && expenseDate.getMonth() === today.getMonth();
-            })
-                                            .flatMap(e => e.items)
-                                            .reduce((sum, item) => sum + item.cost, 0);
-            totalMonthlyExpensesDisplay.textContent = `₱${totalMonthly.toFixed(2)}`;
-
-            // Yearly Calculation (current year)
-            const totalYearly = expensesData.filter(e => {
-                const expenseDate = new Date(e.date);
-                return expenseDate.getFullYear() === today.getFullYear();
-            })
-                                            .flatMap(e => e.items)
-                                            .reduce((sum, item) => sum + item.cost, 0);
-            totalYearlyExpensesDisplay.textContent = `₱${totalYearly.toFixed(2)}`;
-
-
-            const pieData = todayEntry.items.reduce((acc, item) => {
-                acc[item.name] = (acc[item.name] || 0) + item.cost;
-                return acc;
-            }, {});
-
-            const pieLabels = Object.keys(pieData);
-            const pieValues = Object.values(pieData);
-            
-            // Random colors for pie chart
-            const randomColors = pieLabels.map(() => `hsl(${Math.random() * 360}, 70%, 50%)`);
-
-            const darkTheme = body.classList.contains('dark');
-            const textColor = darkTheme ? '#e2e8f0' : '#1a202c';
-            const gridColor = darkTheme ? '#4a5568' : '#e2e8f0';
-
-            // Pie Chart
-            if (pieChart) {
-                pieChart.destroy();
-            }
-            const pieCtx = document.getElementById('pieChart').getContext('2d');
-            pieChart = new Chart(pieCtx, {
-                type: 'pie',
-                data: {
-                    labels: pieLabels,
-                    datasets: [{
-                        data: pieValues,
-                        backgroundColor: randomColors,
-                        hoverOffset: 4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            labels: {
-                                color: textColor,
-                            }
-                        }
-                    }
-                }
-            });
-
-            // Bar Chart
-            if (barChart) {
-                barChart.destroy();
-            }
-            const barCtx = document.getElementById('barChart').getContext('2d');
-
-            // Collect all transactions for the bar chart
-            const allTransactions = expensesData.flatMap(day => 
-                day.items.map(item => ({ date: day.date, time: item.time, cost: item.cost, name: item.name }))
-            ).sort((a, b) => {
-                // Sort by date and then time to ensure chronological order
-                const dateA = new Date(a.date);
-                const dateB = new Date(b.date);
-                if (dateA - dateB !== 0) {
-                    return dateA - dateB;
-                }
-                return a.time.localeCompare(b.time);
-            });
-
-            const labels = allTransactions.map(t => `${t.date} ${t.time} - ${t.name}`);
-            const data = allTransactions.map(t => t.cost);
-
-            barChart = new Chart(barCtx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Transaction Cost (₱)',
-                        data: data,
-                        backgroundColor: '#4299e1',
-                        borderColor: '#2b6cb0',
-                        borderWidth: 1,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        x: {
-                            ticks: { color: textColor, maxRotation: 90, minRotation: 45 },
-                            grid: { color: gridColor },
-                            title: {
-                                display: true,
-                                text: 'Date & Time of Purchase',
-                                color: textColor,
-                            }
-                        },
-                        y: {
-                            ticks: { color: textColor, beginAtZero: true },
-                            grid: { color: gridColor },
-                            title: {
-                                display: true,
-                                text: 'Cost (₱)',
-                                color: textColor,
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            labels: { color: textColor }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                title: (tooltipItem) => {
-                                    return tooltipItem[0].label.split(' - ')[0];
-                                },
-                                label: (tooltipItem) => {
-                                    return `${tooltipItem.dataset.label}: ₱${tooltipItem.raw.toFixed(2)}`;
-                                }
-                            }
-                        }
-                    }
-                }
+        const signupPasswordInput = document.getElementById('signup-password');
+        const toggleSignupPassword = document.getElementById('toggle-signup-password');
+        if (toggleSignupPassword) {
+            toggleSignupPassword.addEventListener('click', () => {
+                togglePasswordVisibility(signupPasswordInput, toggleSignupPassword);
             });
         }
+        
+        const confirmPasswordInput = document.getElementById('signup-confirm-password');
+        const toggleConfirmPassword = document.getElementById('toggle-confirm-password');
+        if (toggleConfirmPassword) {
+            toggleConfirmPassword.addEventListener('click', () => {
+                togglePasswordVisibility(confirmPasswordInput, toggleConfirmPassword);
+            });
+        }
+        
+        googleLoginBtn.addEventListener('click', () => {
+            showMessage("Feature Unavailable", "Sign in with Google is temporarily unavailable. Please use the email and password login.");
+        });
 
-        // Load data on page load
-        window.onload = loadExpenses;
     </script>
 </body>
 </html>
