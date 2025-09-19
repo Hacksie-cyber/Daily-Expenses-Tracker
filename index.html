@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Expense Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            transition: background-color 0.5s, color 0.5s;
+        }
+        .dark {
+            background-color: #1a202c;
+            color: #e2e8f0;
+        }
+        .light {
+            background-color: #f7fafc;
+            color: #1a202c;
+        }
+        .card {
+            background-color: #2d3748;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.5s, box-shadow 0.5s;
+        }
+        .light .card {
+            background-color: #ffffff;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        input, button, select, textarea {
+            transition: all 0.2s ease-in-out;
+        }
+        .animate-fadeInUp {
+            animation: fadeInUp 0.5s forwards;
+        }
+        .animate-fadeOutDown {
+            animation: fadeOutDown 0.5s forwards;
+        }
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        @keyframes fadeOutDown {
+            from {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+        }
+    </style>
+</head>
+<body class="dark font-sans">
+
+    <div class="container mx-auto p-4 md:p-8 min-h-screen flex flex-col items-center">
+        <!-- Header and Theme Toggle -->
+        <header class="w-full flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-bold flex items-center gap-2">
+                Expense Tracker
+                <!-- Image of a hand holding a coin -->
+            </h1>
+            <button id="themeToggle" class="p-2 rounded-full card focus:outline-none">
+                <svg id="moonIcon" class="w-6 h-6 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M17.293 13.95l-1.414-1.414a8 8 0 01-11.314-11.314l-1.414-1.414a10 10 0 0014.142 14.142zM10 20a10 10 0 110-20 10 10 0 010 20zM10 4a6 6 0 100 12V4z" clip-rule="evenodd" fill-rule="evenodd"></path>
+                </svg>
+                <svg id="sunIcon" class="w-6 h-6 text-gray-500 hidden" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 2a8 8 0 100 16A8 8 0 0010 2zm0 14a6 6 0 110-12 6 6 0 010 12zM12 4a1 1 0 011 1v2a1 1 0 11-2 0V5a1 1 0 011-1zm-4 0a1 1 0 011 1v2a1 1 0 11-2 0V5a1 1 0 011-1zm-4 4a1 1 0 011 1v2a1 1 0 11-2 0V9a1 1 0 011-1zM4 12a1 1 0 011 1v2a1 1 0 11-2 0v-2a1 1 0 011-1zM8 16a1 1 0 011 1v2a1 1 0 11-2 0v-2a1 1 0 011-1zm-4 0a1 1 0 011 1v2a1 1 0 11-2 0v-2a1 1 0 011-1zm8 0a1 1 0 011 1v2a1 1 0 11-2 0v-2a1 1 0 011-1zM16 8a1 1 0 011 1v2a1 1 0 11-2 0V9a1 1 0 011-1z" clip-rule="evenodd"></path>
+                </svg>
+            </button>
+        </header>
+
+        <!-- Main content area -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full max-w-6xl">
+
+            <!-- Expense Input Card -->
+            <div class="card p-6 w-full lg:order-1 order-2">
+                <h2 class="text-2xl font-semibold mb-4">Add Expense</h2>
+                <div class="space-y-4">
+                    <div class="flex flex-col">
+                        <label for="item" class="mb-1 text-sm font-medium">Item Name</label>
+                        <input type="text" id="item" placeholder="e.g., Lunch, Coffee, Groceries" class="card p-3 w-full border border-gray-700 focus:border-blue-500 focus:ring focus:ring-blue-500/50 outline-none">
+                    </div>
+                    <div class="flex flex-col">
+                        <label for="cost" class="mb-1 text-sm font-medium">Cost (₱)</label>
+                        <input type="number" id="cost" placeholder="e.g., 12.50" class="card p-3 w-full border border-gray-700 focus:border-blue-500 focus:ring focus:ring-blue-500/50 outline-none">
+                    </div>
+                    <button id="addExpenseBtn" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900">Add Expense</button>
+                    <button id="resetBtn" class="w-full mt-2 text-sm text-gray-400 hover:text-red-500 focus:outline-none">Reset All Data</button>
+                </div>
+
+                <div class="mt-8">
+                    <h3 class="text-xl font-semibold mb-2">Today's Expenses</h3>
+                    <ul id="expensesList" class="space-y-2">
+                        <!-- Expenses will be dynamically added here -->
+                    </ul>
+                </div>
+                
+                <div class="mt-8">
+                    <h3 class="text-xl font-semibold mb-2">Generate Report</h3>
+                    <div class="flex items-center space-x-2">
+                        <select id="reportPeriod" class="card p-3 rounded-lg border border-gray-700 text-sm focus:outline-none focus:border-blue-500">
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="monthly">Monthly</option>
+                            <option value="yearly">Yearly</option>
+                        </select>
+                        <button id="generateReportBtn" class="bg-blue-600 text-white font-medium py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none">Generate</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics and Charts Card -->
+            <div class="card p-6 w-full lg:order-2 order-1 flex flex-col">
+                <h2 class="text-2xl font-semibold mb-4">Expense Statistics</h2>
+                <div class="space-y-4">
+                    <!-- Highlighted Daily Expenses -->
+                    <div class="flex justify-between items-center p-4 bg-blue-600 rounded-lg text-white font-bold">
+                        <span>Total Daily Expenses:</span>
+                        <span id="totalDailyExpenses" class="text-lg">₱0.00</span>
+                    </div>
+                    <!-- Other stats with regular styling -->
+                    <div class="flex justify-between items-center p-3 card mt-4">
+                        <span class="font-medium">Total Weekly Expenses:</span>
+                        <span id="totalWeeklyExpenses" class="text-lg font-bold text-green-500">₱0.00</span>
+                    </div>
+                    <div class="flex justify-between items-center p-3 card mt-4">
+                        <span class="font-medium">Total Monthly Expenses:</span>
+                        <span id="totalMonthlyExpenses" class="text-lg font-bold text-green-500">₱0.00</span>
+                    </div>
+                    <div class="flex justify-between items-center p-3 card mt-4">
+                        <span class="font-medium">Total Yearly Expenses:</span>
+                        <span id="totalYearlyExpenses" class="text-lg font-bold text-green-500">₱0.00</span>
+                    </div>
+                </div>
+
+                <!-- Historical Statistics Section -->
+                <div class="mt-6 pt-6 border-t border-gray-700">
+                    <h2 class="text-2xl font-semibold mb-4">Historical Statistics</h2>
+                    <div class="flex space-x-2 items-center mb-4">
+                        <select id="historicalMonth" class="card p-3 rounded-lg border border-gray-700 text-sm focus:outline-none focus:border-blue-500">
+                            <option value="0">January</option>
+                            <option value="1">February</option>
+                            <option value="2">March</option>
+                            <option value="3">April</option>
+                            <option value="4">May</option>
+                            <option value="5">June</option>
+                            <option value="6">July</option>
+                            <option value="7">August</option>
+                            <option value="8">September</option>
+                            <option value="9">October</option>
+                            <option value="10">November</option>
+                            <option value="11">December</option>
+                        </select>
+                        <input type="number" id="historicalYear" class="card p-3 rounded-lg w-24 border border-gray-700 text-sm focus:outline-none focus:border-blue-500" placeholder="Year">
+                        <button id="viewHistoricalBtn" class="bg-blue-600 text-white font-medium py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none">View</button>
+                    </div>
+                    <div class="flex justify-between items-center p-3 card">
+                        <span id="historicalPeriodText" class="font-medium">Total Expenses:</span>
+                        <span id="totalHistoricalExpenses" class="text-lg font-bold text-green-500">₱0.00</span>
+                    </div>
+                    <!-- Canvas for Historical Chart -->
+                    <div class="mt-6">
+                        <canvas id="historicalChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Chart Container -->
+                <div class="mt-6 flex-grow flex flex-col justify-center">
+                    <div class="mb-4">
+                        <h3 class="text-xl font-semibold mb-2 text-center">Spending Breakdown</h3>
+                        <canvas id="pieChart"></canvas>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold mb-2 text-center">Spending Trend by Time</h3>
+                        <canvas id="barChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notification Message Box -->
+        <div id="messageBox" class="fixed bottom-4 left-1/2 -translate-x-1/2 w-80 p-4 rounded-lg shadow-lg hidden">
+            <p id="messageText" class="text-center font-medium"></p>
+        </div>
+
+        <!-- Reset Confirmation Modal -->
+        <div id="resetModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 hidden flex items-center justify-center">
+            <div class="bg-gray-800 p-8 rounded-lg shadow-xl max-w-sm w-full text-center">
+                <h3 class="text-xl font-semibold mb-4">Are you sure?</h3>
+                <p class="text-gray-400 mb-6">This will permanently delete all your expense data. This cannot be undone.</p>
+                <div class="flex justify-center space-x-4">
+                    <button id="confirmResetBtn" class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 focus:outline-none">Yes, Reset</button>
+                    <button id="cancelResetBtn" class="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 focus:outline-none">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Report Modal -->
+        <div id="reportModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 hidden flex items-center justify-center p-4">
+            <div class="bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-2xl">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-semibold">Expense Report</h3>
+                    <button id="closeReportBtn" class="text-gray-400 hover:text-white">
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                        </svg>
+                    </button>
+                </div>
+                <textarea id="reportTextarea" class="w-full h-80 p-3 text-sm rounded-lg card resize-none focus:outline-none border border-gray-700 mb-4"></textarea>
+                <div class="flex justify-end space-x-2">
+                    <button id="copyReportBtn" class="bg-gray-600 text-white font-medium py-2 px-4 rounded-lg hover:bg-gray-700 focus:outline-none">Copy Report</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        let expensesData = []; // This will store the data from local storage
+        const LAST_ACCESS_DATE_KEY = 'lastAccessDate';
+
+        // --- UI Element References ---
+        const themeToggle = document.getElementById('themeToggle');
+        const body = document.body;
+        const moonIcon = document.getElementById('moonIcon');
+        const sunIcon = document.getElementById('sunIcon');
+        const addExpenseBtn = document.getElementById('addExpenseBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const totalDailyExpensesDisplay = document.getElementById('totalDailyExpenses');
+        const totalWeeklyExpensesDisplay = document.getElementById('totalWeeklyExpenses');
+        const totalMonthlyExpensesDisplay = document.getElementById('totalMonthlyExpenses');
+        const totalYearlyExpensesDisplay = document.getElementById('totalYearlyExpenses');
+        const itemInput = document.getElementById('item');
+        const costInput = document.getElementById('cost');
+        const messageBox = document.getElementById('messageBox');
+        const messageText = document.getElementById('messageText');
+        const expensesList = document.getElementById('expensesList');
+        const resetModal = document.getElementById('resetModal');
+        const confirmResetBtn = document.getElementById('confirmResetBtn');
+        const cancelResetBtn = document.getElementById('cancelResetBtn');
+        const reportPeriodSelect = document.getElementById('reportPeriod');
+        const generateReportBtn = document.getElementById('generateReportBtn');
+        const reportTextarea = document.getElementById('reportTextarea');
+        const reportModal = document.getElementById('reportModal');
+        const closeReportBtn = document.getElementById('closeReportBtn');
+        const copyReportBtn = document.getElementById('copyReportBtn');
+        // New UI references
+        const historicalMonthSelect = document.getElementById('historicalMonth');
+        const historicalYearInput = document.getElementById('historicalYear');
+        const viewHistoricalBtn = document.getElementById('viewHistoricalBtn');
+        const historicalPeriodText = document.getElementById('historicalPeriodText');
+        const totalHistoricalExpensesDisplay = document.getElementById('totalHistoricalExpenses');
+        const historicalChartCanvas = document.getElementById('historicalChart');
+
+        // Chart instances
+        let pieChart, barChart, historicalChart;
+
+        // --- Theme Toggle ---
+        themeToggle.addEventListener('click', () => {
+            body.classList.toggle('dark');
+            body.classList.toggle('light');
+            moonIcon.classList.toggle('hidden');
+            sunIcon.classList.toggle('hidden');
+            updateCharts();
+            updateHistoricalStats();
+        });
+
+        // --- Utility Functions ---
+        function showMessage(text, isError = false) {
+            messageText.textContent = text;
+            messageBox.style.backgroundColor = isError ? '#ef4444' : '#22c55e';
+            messageBox.style.color = '#fff';
+            messageBox.classList.remove('hidden', 'animate-fadeOutDown');
+            messageBox.classList.add('animate-fadeInUp');
+            setTimeout(() => {
+                messageBox.classList.remove('animate-fadeInUp');
+                messageBox.classList.add('animate-fadeOutDown');
+                setTimeout(() => {
+                    messageBox.classList.add('hidden');
+                }, 500);
+            }, 3000);
+        }
+
+        // --- Data Storage Functions using localStorage ---
+        function saveExpenses() {
+            localStorage.setItem('expenses', JSON.stringify(expensesData));
+        }
+
+        function loadExpenses() {
+            const storedData = localStorage.getItem('expenses');
+            if (storedData) {
+                expensesData = JSON.parse(storedData);
+            } else {
+                expensesData = [];
+            }
+            
+            // Get today's date in YYYY-MM-DD format
+            const todayStr = new Date().toISOString().split('T')[0];
+            const lastAccessDate = localStorage.getItem(LAST_ACCESS_DATE_KEY);
+
+            // Check if it's a new day
+            if (lastAccessDate !== todayStr) {
+                // It's a new day, clear all daily data
+                expensesData.forEach(day => {
+                    if (day.date === lastAccessDate) {
+                        day.items = [];
+                    }
+                });
+                saveExpenses();
+                showMessage("Daily expenses have been reset for the new day.");
+            }
+            
+            // Store the current date for the next load
+            localStorage.setItem(LAST_ACCESS_DATE_KEY, todayStr);
+
+            // Ensure all loaded items have a time property for the new chart
+            expensesData.forEach(day => {
+                day.items.forEach(item => {
+                    if (!item.time) {
+                        item.time = 'N/A';
+                    }
+                });
+            });
+            // Sort data by date for chronological charts
+            expensesData.sort((a, b) => new Date(a.date) - new Date(b.date));
+            updateCharts();
+            renderTodayExpenses();
+
+            // Set initial values for historical stats selectors
+            const today = new Date();
+            historicalMonthSelect.value = today.getMonth();
+            historicalYearInput.value = today.getFullYear();
+            updateHistoricalStats();
+        }
+
+        addExpenseBtn.addEventListener('click', () => {
+            const item = itemInput.value.trim();
+            const cost = parseFloat(costInput.value);
+
+            if (item && !isNaN(cost) && cost > 0) {
+                const today = new Date().toISOString().split('T')[0];
+                const time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+                let todayEntry = expensesData.find(e => e.date === today);
+
+                if (!todayEntry) {
+                    todayEntry = { date: today, items: [] };
+                    expensesData.push(todayEntry);
+                }
+
+                todayEntry.items.push({ name: item, cost: cost, time: time });
+                saveExpenses();
+                loadExpenses(); // Reload data to update UI and charts
+
+                showMessage("Expense added successfully!");
+                itemInput.value = '';
+                costInput.value = '';
+                itemInput.focus();
+            } else {
+                showMessage("Please enter a valid item name and cost.", true);
+            }
+        });
+
+        // Reset Data with Modal
+        resetBtn.addEventListener('click', () => {
+            resetModal.classList.remove('hidden');
+        });
+
+        confirmResetBtn.addEventListener('click', () => {
+            localStorage.removeItem('expenses');
+            loadExpenses(); // Reload to show empty state
+            showMessage("All data has been reset.");
+            resetModal.classList.add('hidden');
+        });
+
+        cancelResetBtn.addEventListener('click', () => {
+            resetModal.classList.add('hidden');
+        });
+        
+        // --- Report Generation ---
+        generateReportBtn.addEventListener('click', () => {
+            const period = reportPeriodSelect.value;
+            let reportData = [];
+            const today = new Date();
+
+            switch(period) {
+                case 'daily':
+                    const todayStr = today.toISOString().split('T')[0];
+                    reportData = expensesData.filter(e => e.date === todayStr);
+                    break;
+                case 'weekly':
+                    const weekAgo = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 7);
+                    reportData = expensesData.filter(e => new Date(e.date) >= weekAgo);
+                    break;
+                case 'monthly':
+                    const monthAgo = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate());
+                    reportData = expensesData.filter(e => new Date(e.date) >= monthAgo);
+                    break;
+                case 'yearly':
+                    const yearAgo = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate());
+                    reportData = expensesData.filter(e => new Date(e.date) >= yearAgo);
+                    break;
+            }
+
+            let reportText = `Expense Report (${period})\n\n`;
+            let totalReportExpenses = 0;
+
+            if (reportData.length > 0) {
+                const itemBreakdown = {};
+                reportData.forEach(day => {
+                    reportText += `--- ${day.date} ---\n`;
+                    day.items.forEach(item => {
+                        reportText += `${item.name}: ₱${item.cost.toFixed(2)}\n`;
+                        totalReportExpenses += item.cost;
+                        itemBreakdown[item.name] = (itemBreakdown[item.name] || 0) + item.cost;
+                    });
+                });
+                reportText += `\nTotal for period: ₱${totalReportExpenses.toFixed(2)}\n\n`;
+                reportText += 'Breakdown by Item:\n';
+                for (const item in itemBreakdown) {
+                    reportText += `- ${item}: ₱${itemBreakdown[item].toFixed(2)}\n`;
+                }
+            } else {
+                reportText += "No expenses found for this period.";
+            }
+
+            reportTextarea.value = reportText;
+            reportModal.classList.remove('hidden');
+            showMessage(`Report for ${period} generated.`);
+        });
+
+        closeReportBtn.addEventListener('click', () => {
+            reportModal.classList.add('hidden');
+        });
+
+        copyReportBtn.addEventListener('click', () => {
+            document.execCommand('copy');
+            showMessage("Report copied to clipboard!");
+        });
+
+        // New function to update historical stats AND the new chart
+        function updateHistoricalStats() {
+            const selectedMonth = parseInt(historicalMonthSelect.value);
+            const selectedYear = parseInt(historicalYearInput.value);
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+            const filteredExpenses = expensesData.filter(e => {
+                const expenseDate = new Date(e.date);
+                return expenseDate.getFullYear() === selectedYear && expenseDate.getMonth() === selectedMonth;
+            });
+
+            const totalHistorical = filteredExpenses.flatMap(e => e.items).reduce((sum, item) => sum + item.cost, 0);
+
+            historicalPeriodText.textContent = `Total Expenses for ${monthNames[selectedMonth]} ${selectedYear}:`;
+            totalHistoricalExpensesDisplay.textContent = `₱${totalHistorical.toFixed(2)}`;
+
+            // Data for the historical chart
+            const dailyTotals = {};
+            filteredExpenses.forEach(dayEntry => {
+                const day = new Date(dayEntry.date).getDate();
+                const total = dayEntry.items.reduce((sum, item) => sum + item.cost, 0);
+                dailyTotals[day] = total;
+            });
+
+            const labels = Object.keys(dailyTotals).map(day => `Day ${day}`);
+            const data = Object.values(dailyTotals);
+
+            const darkTheme = body.classList.contains('dark');
+            const textColor = darkTheme ? '#e2e8f0' : '#1a202c';
+            const gridColor = darkTheme ? '#4a5568' : '#e2e8f0';
+
+            // Destroy existing historical chart instance if it exists
+            if (historicalChart) {
+                historicalChart.destroy();
+            }
+
+            // Create new historical chart instance
+            const historicalCtx = historicalChartCanvas.getContext('2d');
+            historicalChart = new Chart(historicalCtx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: `Daily Expenses in ${monthNames[selectedMonth]}`,
+                        data: data,
+                        backgroundColor: '#4299e1',
+                        borderColor: '#2b6cb0',
+                        borderWidth: 1,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: {
+                            ticks: { color: textColor },
+                            grid: { color: gridColor },
+                            title: {
+                                display: true,
+                                text: 'Day of the Month',
+                                color: textColor,
+                            }
+                        },
+                        y: {
+                            ticks: { color: textColor, beginAtZero: true },
+                            grid: { color: gridColor },
+                            title: {
+                                display: true,
+                                text: 'Cost (₱)',
+                                color: textColor,
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: { color: textColor }
+                        }
+                    }
+                }
+            });
+        }
+
+        viewHistoricalBtn.addEventListener('click', updateHistoricalStats);
+        
+        // --- UI Rendering Functions ---
+        function renderTodayExpenses() {
+            expensesList.innerHTML = '';
+            const today = new Date().toISOString().split('T')[0];
+            const todayEntry = expensesData.find(e => e.date === today);
+            
+            if (todayEntry && todayEntry.items && todayEntry.items.length > 0) {
+                todayEntry.items.forEach(item => {
+                    const li = document.createElement('li');
+                    li.className = 'flex justify-between items-center p-2 card text-sm';
+                    li.innerHTML = `
+                        <span class="font-medium">${item.name}</span>
+                        <span class="font-bold text-green-500">₱${item.cost.toFixed(2)}</span>
+                    `;
+                    expensesList.appendChild(li);
+                });
+            } else {
+                const li = document.createElement('li');
+                li.className = 'text-center text-gray-400 p-4';
+                li.textContent = 'No expenses recorded today.';
+                expensesList.appendChild(li);
+            }
+        }
+
+        function updateCharts() {
+            const today = new Date();
+            const todayStr = today.toISOString().split('T')[0];
+
+            // Daily Calculation
+            const todayEntry = expensesData.find(e => e.date === todayStr) || { items: [] };
+            const totalDaily = todayEntry.items.reduce((sum, item) => sum + item.cost, 0);
+            totalDailyExpensesDisplay.textContent = `₱${totalDaily.toFixed(2)}`;
+
+            // Weekly Calculation (last 7 days)
+            const weekAgo = new Date();
+            weekAgo.setDate(today.getDate() - 7);
+            const totalWeekly = expensesData.filter(e => new Date(e.date) >= weekAgo)
+                                            .flatMap(e => e.items)
+                                            .reduce((sum, item) => sum + item.cost, 0);
+            totalWeeklyExpensesDisplay.textContent = `₱${totalWeekly.toFixed(2)}`;
+
+            // Monthly Calculation (current month)
+            const totalMonthly = expensesData.filter(e => {
+                const expenseDate = new Date(e.date);
+                return expenseDate.getFullYear() === today.getFullYear() && expenseDate.getMonth() === today.getMonth();
+            })
+                                            .flatMap(e => e.items)
+                                            .reduce((sum, item) => sum + item.cost, 0);
+            totalMonthlyExpensesDisplay.textContent = `₱${totalMonthly.toFixed(2)}`;
+
+            // Yearly Calculation (current year)
+            const totalYearly = expensesData.filter(e => {
+                const expenseDate = new Date(e.date);
+                return expenseDate.getFullYear() === today.getFullYear();
+            })
+                                            .flatMap(e => e.items)
+                                            .reduce((sum, item) => sum + item.cost, 0);
+            totalYearlyExpensesDisplay.textContent = `₱${totalYearly.toFixed(2)}`;
+
+
+            const pieData = todayEntry.items.reduce((acc, item) => {
+                acc[item.name] = (acc[item.name] || 0) + item.cost;
+                return acc;
+            }, {});
+
+            const pieLabels = Object.keys(pieData);
+            const pieValues = Object.values(pieData);
+            
+            // Random colors for pie chart
+            const randomColors = pieLabels.map(() => `hsl(${Math.random() * 360}, 70%, 50%)`);
+
+            const darkTheme = body.classList.contains('dark');
+            const textColor = darkTheme ? '#e2e8f0' : '#1a202c';
+            const gridColor = darkTheme ? '#4a5568' : '#e2e8f0';
+
+            // Pie Chart
+            if (pieChart) {
+                pieChart.destroy();
+            }
+            const pieCtx = document.getElementById('pieChart').getContext('2d');
+            pieChart = new Chart(pieCtx, {
+                type: 'pie',
+                data: {
+                    labels: pieLabels,
+                    datasets: [{
+                        data: pieValues,
+                        backgroundColor: randomColors,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: textColor,
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Bar Chart
+            if (barChart) {
+                barChart.destroy();
+            }
+            const barCtx = document.getElementById('barChart').getContext('2d');
+
+            // Collect all transactions for the bar chart
+            const allTransactions = expensesData.flatMap(day => 
+                day.items.map(item => ({ date: day.date, time: item.time, cost: item.cost, name: item.name }))
+            ).sort((a, b) => {
+                // Sort by date and then time to ensure chronological order
+                const dateA = new Date(a.date);
+                const dateB = new Date(b.date);
+                if (dateA - dateB !== 0) {
+                    return dateA - dateB;
+                }
+                return a.time.localeCompare(b.time);
+            });
+
+            const labels = allTransactions.map(t => `${t.date} ${t.time} - ${t.name}`);
+            const data = allTransactions.map(t => t.cost);
+
+            barChart = new Chart(barCtx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Transaction Cost (₱)',
+                        data: data,
+                        backgroundColor: '#4299e1',
+                        borderColor: '#2b6cb0',
+                        borderWidth: 1,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: {
+                            ticks: { color: textColor, maxRotation: 90, minRotation: 45 },
+                            grid: { color: gridColor },
+                            title: {
+                                display: true,
+                                text: 'Date & Time of Purchase',
+                                color: textColor,
+                            }
+                        },
+                        y: {
+                            ticks: { color: textColor, beginAtZero: true },
+                            grid: { color: gridColor },
+                            title: {
+                                display: true,
+                                text: 'Cost (₱)',
+                                color: textColor,
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: { color: textColor }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                title: (tooltipItem) => {
+                                    return tooltipItem[0].label.split(' - ')[0];
+                                },
+                                label: (tooltipItem) => {
+                                    return `${tooltipItem.dataset.label}: ₱${tooltipItem.raw.toFixed(2)}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Load data on page load
+        window.onload = loadExpenses;
+    </script>
+</body>
+</html>
