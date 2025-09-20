@@ -1,339 +1,168 @@
 <!DOCTYPE html>
-<html lang="en" class="">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daily Expenses Tracker Dashboard</title>
+    <title>Daily Expenses Tracker</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <!-- Chart.js for visualizations -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        :root {
-            --bg-body: #f3f4f6;
-            --bg-card: #ffffff;
-            --bg-section: #f9fafb;
-            --text-primary: #1f2937;
-            --text-secondary: #4b5563;
-            --text-muted: #6b7280;
-            --border-color: #d1d5db;
-        }
-
-        .dark-theme {
-            --bg-body: #111827;
-            --bg-card: #1f2937;
-            --bg-section: #374151;
-            --text-primary: #f9fafb;
-            --text-secondary: #e5e7eb;
-            --text-muted: #9ca3af;
-            --border-color: #4b5563;
-        }
-
         body {
             font-family: 'Inter', sans-serif;
-            background-color: var(--bg-body);
-            color: var(--text-primary);
+            background: linear-gradient(-45deg, #a7f3d0, #bfdbfe, #d1e5ff, #f3e9d1);
+            background-size: 400% 400%;
+            animation: gradient-animation 15s ease infinite;
         }
 
-        .card {
-            background-color: var(--bg-card);
-            color: var(--text-primary);
-        }
-
-        .section {
-            background-color: var(--bg-section);
-        }
-
-        .text-primary {
-            color: var(--text-primary);
-        }
-        
-        .text-secondary {
-            color: var(--text-secondary);
-        }
-        
-        .text-muted {
-            color: var(--text-muted);
-        }
-        
-        .border-color {
-            border-color: var(--border-color);
-        }
-        
-        .input-field {
-            background-color: var(--bg-card);
-            color: var(--text-primary);
-            border-color: var(--border-color);
+        @keyframes gradient-animation {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
         }
 
         .modal {
-            transition: visibility 0s, opacity 0.3s ease-in-out;
+            transition: visibility 0.3s, opacity 0.3s linear;
         }
-
-        .modal.open {
-            visibility: visible;
-        }
-
         .modal-content {
             transform: translateY(-20px);
-            transition: transform 0.3s ease-in-out;
+            transition: transform 0.3s ease-out;
         }
-
         .modal.open .modal-content {
             transform: translateY(0);
         }
     </style>
 </head>
-<body class="flex flex-col items-center justify-center min-h-screen p-4 transition-colors duration-300">
-
-    <!-- Main Container: Adjusted padding for mobile -->
-    <div class="w-full max-w-2xl card rounded-3xl shadow-xl p-4 sm:p-8 transform transition-colors duration-300">
-        <header class="flex flex-col sm:flex-row items-center justify-between mb-4 sm:mb-8">
-            <h1 class="text-3xl font-bold text-center sm:text-left text-primary mb-4 sm:mb-0">Daily Expenses Tracker</h1>
-            <div class="flex items-center space-x-4">
-                <button id="theme-toggle" class="p-2 rounded-full text-secondary hover:bg-gray-200 hover:text-primary dark:hover:bg-gray-700 dark:hover:text-white transition duration-300">
-                    <i class="fas fa-moon" id="moon-icon"></i>
-                    <i class="fas fa-sun hidden" id="sun-icon"></i>
-                </button>
-                <span id="user-email" class="text-secondary text-sm font-medium"></span>
-                <button id="logout-btn" class="px-4 py-2 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition duration-300">Logout</button>
-            </div>
-        </header>
-
-        <!-- Form Section: Responsive stacking with flex-col -->
-        <section class="mb-8 p-6 section rounded-2xl transition-colors duration-300">
-            <h2 class="text-2xl font-semibold text-primary mb-4">Add New Expense</h2>
-            <form id="add-expense-form" class="space-y-4">
-                <div>
-                    <label for="expense-amount" class="block text-secondary font-medium mb-2">Amount</label>
-                    <input type="number" id="expense-amount" required class="w-full px-4 py-2 border border-color rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 input-field transition duration-300" placeholder="e.g. 25.50">
-                </div>
-                <div>
-                    <label for="expense-category" class="block text-secondary font-medium mb-2">Category</label>
-                    <select id="expense-category" required class="w-full px-4 py-2 border border-color rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 input-field transition duration-300">
-                        <option value="">Select Category</option>
-                        <option value="Food">Food</option>
-                        <option value="Shopping">Shopping</option>
-                        <option value="Bills">Bills</option>
-                        <option value="Entertainment">Entertainment</option>
-                        <option value="Transportation">Transportation</option>
-                        <option value="Other">Other</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="expense-description" class="block text-secondary font-medium mb-2">Description</label>
-                    <input type="text" id="expense-description" required class="w-full px-4 py-2 border border-color rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 input-field transition duration-300" placeholder="e.g. Lunch at the cafe">
-                </div>
-                <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition duration-300">Add Expense</button>
-            </form>
-        </section>
-
-        <!-- Monthly Budget Section: Flexbox for responsive row/column layout -->
-        <section class="mb-8 p-6 section rounded-2xl transition-colors duration-300">
-            <h2 class="text-2xl font-semibold text-primary mb-4">Monthly Budget</h2>
-            <form id="set-budget-form" class="flex flex-col sm:flex-row items-end sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
-                <div class="flex-grow w-full">
-                    <label for="monthly-budget-input" class="block text-secondary font-medium mb-2">Set Your Monthly Budget</label>
-                    <input type="number" id="monthly-budget-input" required class="w-full px-4 py-2 border border-color rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 input-field transition duration-300" placeholder="e.g. 5000">
-                </div>
-                <button type="submit" class="w-full sm:w-auto bg-green-600 text-white py-2 px-6 rounded-lg font-semibold hover:bg-green-700 transition duration-300">Set Budget</button>
-            </form>
-            
-            <div class="mt-6">
-                <div class="flex justify-between items-center mb-2">
-                    <span class="text-secondary font-medium">Budget: <span id="budget-amount" class="text-primary font-bold">₱0.00</span></span>
-                    <span class="text-secondary font-medium">Spent: <span id="monthly-spent" class="text-primary font-bold">₱0.00</span></span>
-                </div>
-                <div class="w-full bg-gray-200 rounded-full h-4 dark:bg-gray-700 overflow-hidden">
-                    <div id="budget-progress-bar" class="h-4 bg-blue-600 rounded-full transition-all duration-500" style="width: 0%;"></div>
-                </div>
-                <p id="budget-message" class="text-sm mt-2 text-center text-muted">Set a budget to start tracking!</p>
-            </div>
-        </section>
-
-        <!-- Summary Section: Grid layout for side-by-side totals -->
-        <section class="mb-8 p-6 section rounded-2xl transition-colors duration-300">
-            <h2 class="text-2xl font-semibold text-primary mb-4">Expense Summary</h2>
-            <div class="grid grid-cols-2 gap-4 text-center">
-                <div class="p-4 rounded-xl card shadow-sm">
-                    <p class="text-muted text-sm mb-1">Today</p>
-                    <p id="daily-total" class="text-xl font-bold text-blue-600 dark:text-blue-400">₱0.00</p>
-                </div>
-                <div class="p-4 rounded-xl card shadow-sm">
-                    <p class="text-muted text-sm mb-1">This Week</p>
-                    <p id="weekly-total" class="text-xl font-bold text-blue-600 dark:text-blue-400">₱0.00</p>
-                </div>
-                <div class="p-4 rounded-xl card shadow-sm">
-                    <p class="text-muted text-sm mb-1">This Month</p>
-                    <p id="monthly-total" class="text-xl font-bold text-blue-600 dark:text-blue-400">₱0.00</p>
-                </div>
-                <div class="p-4 rounded-xl card shadow-sm">
-                    <p class="text-muted text-sm mb-1">This Year</p>
-                    <p id="yearly-total" class="text-xl font-bold text-blue-600 dark:text-blue-400">₱0.00</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- Charts Section: Responsive layout with flex-col -->
-        <section class="mb-8 p-6 section rounded-2xl transition-colors duration-300">
-            <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
-                <h2 class="text-2xl font-semibold text-primary mb-2 sm:mb-0">Statistics</h2>
-                <select id="report-time-period" class="px-3 py-1 rounded-md border border-color input-field">
-                    <option value="daily">Today</option>
-                    <option value="weekly">This Week</option>
-                    <option value="monthly">This Month</option>
-                    <option value="yearly" selected>This Year</option>
-                </select>
-            </div>
-            
-            <div id="chart-container" class="space-y-8">
-                <div>
-                    <h4 class="text-xl font-semibold text-primary text-center mb-2">Category Breakdown</h4>
-                    <canvas id="expense-pie-chart"></canvas>
-                </div>
-                <div>
-                    <h4 class="text-xl font-semibold text-primary text-center mb-2">Spending Trends</h4>
-                    <canvas id="expense-line-chart"></canvas>
-                </div>
-            </div>
-        </section>
-
-        <!-- Report List Section: Flexbox for responsive alignment -->
-        <section class="p-6 section rounded-2xl mb-8 transition-colors duration-300">
-            <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
-                <h2 class="text-2xl font-semibold text-primary mb-2 sm:mb-0">Report Section</h2>
-                <div class="flex items-center space-x-2 mt-2 sm:mt-0">
-                    <span class="text-secondary text-sm font-medium">View Report By:</span>
-                    <select id="expenses-report-time-period" class="px-3 py-1 rounded-md border border-color input-field">
-                        <option value="all">All Time</option>
-                        <option value="daily">Today</option>
-                        <option value="weekly">This Week</option>
-                        <option value="monthly">This Month</option>
-                        <option value="yearly">This Year</option>
-                    </select>
-                </div>
-            </div>
-            <p class="text-lg font-bold text-primary mb-4">Total for this period: <span id="report-total" class="text-blue-600 dark:text-blue-400">₱0.00</span></p>
-            <ul id="expenses-list" class="space-y-4">
-                <!-- Expenses will be dynamically added here -->
-                <li class="text-muted text-center py-4" id="no-expenses-message">No expenses added yet.</li>
-            </ul>
-        </section>
-    </div>
+<body class="flex items-center justify-center min-h-screen p-4">
 
     <!-- Modal for messages -->
     <div id="messageModal" class="modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 invisible opacity-0">
-        <div class="modal-content card p-6 rounded-xl shadow-lg w-full max-w-sm text-center">
-            <h3 id="modalTitle" class="text-xl font-bold mb-3 text-primary"></h3>
-            <p id="modalMessage" class="text-secondary mb-4"></p>
+        <div class="modal-content bg-white p-6 rounded-xl shadow-lg w-full max-w-sm text-center">
+            <h3 id="modalTitle" class="text-xl font-bold mb-3 text-gray-800"></h3>
+            <p id="modalMessage" class="text-gray-600 mb-4"></p>
             <button id="closeModalBtn" class="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition duration-300">OK</button>
         </div>
     </div>
+
+    <div id="auth-container" class="w-full max-w-md bg-white rounded-3xl shadow-xl p-8 transform transition-transform duration-500 ease-in-out">
+        <div class="flex justify-center mb-4">
+            <i class="fas fa-chart-line text-blue-600 text-5xl"></i>
+        </div>
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Daily Expenses Tracker</h1>
+        <div id="login-form-container">
+            <h2 class="text-2xl font-semibold text-center text-gray-700 mb-6 flex items-center justify-center space-x-2">
+                <i class="fas fa-lock text-blue-600"></i>
+                <span>Login</span>
+            </h2>
+            <form id="login-form" class="space-y-6">
+                <div>
+                    <label for="login-email" class="block text-gray-700 font-medium mb-2">Email Address</label>
+                    <input type="email" id="login-email" name="email" placeholder="you@example.com" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300">
+                </div>
+                <div class="relative">
+                    <label for="login-password" class="block text-gray-700 font-medium mb-2">Password</label>
+                    <input type="password" id="login-password" name="password" placeholder="••••••••" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300">
+                    <span class="absolute inset-y-0 right-0 top-6 pr-3 flex items-center text-gray-500 cursor-pointer">
+                        <i class="fas fa-eye-slash" id="toggle-login-password"></i>
+                    </span>
+                </div>
+                <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition duration-300">Log In</button>
+            </form>
+            <div class="my-6 flex items-center before:flex-1 before:border-t before:border-gray-300 before:mt-0.5 after:flex-1 after:border-t after:border-gray-300 after:mt-0.5">
+                <p class="text-center text-gray-500 text-sm mx-4">OR</p>
+            </div>
+            <button id="google-login-btn" class="w-full py-3 px-4 flex items-center justify-center space-x-2 bg-white text-gray-700 rounded-lg border border-gray-300 hover:bg-gray-50 transition duration-300 font-semibold shadow-sm">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google logo" class="w-5 h-5">
+                <span>Sign in with Google</span>
+            </button>
+            <p class="mt-6 text-center text-gray-600">
+                Don't have an account? <button id="show-signup-btn" class="text-blue-600 font-semibold hover:text-blue-700 transition duration-300">Sign Up</button>
+            </p>
+        </div>
+
+        <div id="signup-form-container" class="hidden">
+            <h2 class="text-2xl font-semibold text-center text-gray-700 mb-6 flex items-center justify-center space-x-2">
+                <i class="fas fa-user-plus text-green-600"></i>
+                <span>Sign Up</span>
+            </h2>
+            <form id="signup-form" class="space-y-6">
+                <div>
+                    <label for="signup-email" class="block text-gray-700 font-medium mb-2">Email Address</label>
+                    <input type="email" id="signup-email" name="email" placeholder="you@example.com" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300">
+                </div>
+                <div class="relative">
+                    <label for="signup-password" class="block text-gray-700 font-medium mb-2">Password</label>
+                    <input type="password" id="signup-password" name="password" placeholder="Create a password" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300">
+                    <span class="absolute inset-y-0 right-0 top-6 pr-3 flex items-center text-gray-500 cursor-pointer">
+                        <i class="fas fa-eye-slash" id="toggle-signup-password"></i>
+                    </span>
+                </div>
+                 <div class="relative">
+                    <label for="signup-confirm-password" class="block text-gray-700 font-medium mb-2">Confirm Password</label>
+                    <input type="password" id="signup-confirm-password" name="confirm-password" placeholder="Confirm your password" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300">
+                    <span class="absolute inset-y-0 right-0 top-6 pr-3 flex items-center text-gray-500 cursor-pointer">
+                        <i class="fas fa-eye-slash" id="toggle-confirm-password"></i>
+                    </span>
+                </div>
+                <button type="submit" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 transition duration-300">Sign Up</button>
+            </form>
+            <p class="mt-6 text-center text-gray-600">
+                Already have an account? <button id="show-login-btn" class="text-blue-600 font-semibold hover:text-blue-700 transition duration-300">Log In</button>
+            </p>
+        </div>
+    </div>
+
     
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, setDoc, query, where, orderBy, getDoc } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-analytics.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, setDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
         import { setLogLevel } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
 
+        // Set Firebase debug log level
         setLogLevel('debug');
 
         const __app_id = "default-app-id";
-        const addExpenseForm = document.getElementById('add-expense-form');
-        const expensesList = document.getElementById('expenses-list');
-        const logoutBtn = document.getElementById('logout-btn');
-        const userEmailSpan = document.getElementById('user-email');
-        const dailyTotalSpan = document.getElementById('daily-total');
-        const weeklyTotalSpan = document.getElementById('weekly-total');
-        const monthlyTotalSpan = document.getElementById('monthly-total');
-        const yearlyTotalSpan = document.getElementById('yearly-total');
-        const reportTotalSpan = document.getElementById('report-total');
-        const noExpensesMessage = document.getElementById('no-expenses-message');
+        const authContainer = document.getElementById('auth-container');
+        const loginFormContainer = document.getElementById('login-form-container');
+        const signupFormContainer = document.getElementById('signup-form-container');
+        const showSignupBtn = document.getElementById('show-signup-btn');
+        const showLoginBtn = document.getElementById('show-login-btn');
+        const loginForm = document.getElementById('login-form');
+        const signupForm = document.getElementById('signup-form');
         const messageModal = document.getElementById('messageModal');
         const modalTitle = document.getElementById('modalTitle');
         const modalMessage = document.getElementById('modalMessage');
         const closeModalBtn = document.getElementById('closeModalBtn');
-        const reportTimePeriodSelect = document.getElementById('report-time-period');
-        const expensesReportTimePeriodSelect = document.getElementById('expenses-report-time-period');
-        const expensePieChartCanvas = document.getElementById('expense-pie-chart');
-        const expenseLineChartCanvas = document.getElementById('expense-line-chart');
-        const themeToggleBtn = document.getElementById('theme-toggle');
-        const moonIcon = document.getElementById('moon-icon');
-        const sunIcon = document.getElementById('sun-icon');
-        const bodyElement = document.body;
-
-        // New budget elements
-        const setBudgetForm = document.getElementById('set-budget-form');
-        const monthlyBudgetInput = document.getElementById('monthly-budget-input');
-        const budgetAmountSpan = document.getElementById('budget-amount');
-        const monthlySpentSpan = document.getElementById('monthly-spent');
-        const budgetProgressBar = document.getElementById('budget-progress-bar');
-        const budgetMessage = document.getElementById('budgetMessage');
+        const googleLoginBtn = document.getElementById('google-login-btn');
 
         let db, auth;
-        let currentUserId = null;
-        let allExpenses = [];
-        let expensePieChart;
-        let expenseLineChart;
-        let monthlyBudget = 0; // Store the user's budget
-
-        // --- Dark/Light Mode Logic ---
-        const themePreference = localStorage.getItem('theme');
-        if (themePreference === 'dark') {
-            bodyElement.classList.add('dark-theme');
-            moonIcon.classList.add('hidden');
-            sunIcon.classList.remove('hidden');
-        } else {
-            bodyElement.classList.remove('dark-theme');
-            moonIcon.classList.remove('hidden');
-            sunIcon.classList.add('hidden');
-        }
-
-        themeToggleBtn.addEventListener('click', () => {
-            if (bodyElement.classList.contains('dark-theme')) {
-                bodyElement.classList.remove('dark-theme');
-                localStorage.setItem('theme', 'light');
-                moonIcon.classList.remove('hidden');
-                sunIcon.classList.add('hidden');
-            } else {
-                bodyElement.classList.add('dark-theme');
-                localStorage.setItem('theme', 'dark');
-                moonIcon.classList.add('hidden');
-                sunIcon.classList.remove('hidden');
-            }
-            // Update chart colors on theme change
-            if (expensePieChart) {
-                updateChartTheme(expensePieChart);
-            }
-            if (expenseLineChart) {
-                updateChartTheme(expenseLineChart);
-            }
-        });
 
         // Custom Modal Function
-        function showMessage(title, message, modalId = 'messageModal') {
-            const modal = document.getElementById(modalId);
-            if (modalId === 'messageModal') {
-                modalTitle.textContent = title;
-                modalMessage.textContent = message;
-                modal.classList.add('open', 'visible', 'opacity-100');
-                modal.classList.remove('invisible', 'opacity-0');
-            }
+        function showMessage(title, message) {
+            modalTitle.textContent = title;
+            modalMessage.textContent = message;
+            messageModal.classList.add('open', 'visible', 'opacity-100');
+            messageModal.classList.remove('invisible', 'opacity-0');
         }
 
-        function hideMessage(modalId = 'messageModal') {
-            const modal = document.getElementById(modalId);
-            modal.classList.remove('open', 'visible', 'opacity-100');
-            modal.classList.add('invisible', 'opacity-0');
-        }
+        closeModalBtn.addEventListener('click', () => {
+            messageModal.classList.remove('open', 'visible', 'opacity-100');
+            messageModal.classList.add('invisible', 'opacity-0');
+        });
 
-        closeModalBtn.addEventListener('click', () => hideMessage());
-
-        // Initialize Firebase with the provided config
+        // Initialize Firebase with your specific config
         try {
+            // IMPORTANT: The provided config is used here.
             const firebaseConfig = {
                 apiKey: "AIzaSyBSEl_DhSpLxQQcLz-mV0jW7yIZfajA8rw",
                 authDomain: "daily-expenses-tracker-19eda.firebaseapp.com",
@@ -344,487 +173,125 @@
                 measurementId: "G-VWCLRRBFKZ"
             };
             const app = initializeApp(firebaseConfig);
+            const analytics = getAnalytics(app);
             db = getFirestore(app);
             auth = getAuth(app);
         } catch (e) {
             console.error("Firebase initialization error:", e);
+            showMessage("Error", "Failed to initialize Firebase. Please check the configuration.");
         }
 
-        // Auth state listener
+        // Listen for Auth State Changes and redirect if authenticated
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                currentUserId = user.uid;
-                userEmailSpan.textContent = user.email || "Guest User";
-                // Load budget and expenses
-                await loadBudget(currentUserId);
-                setupRealtimeExpensesListener(currentUserId);
-            } else {
-                // If the user is not logged in, redirect to the login page
-                window.location.href = 'index.html';
+                 // Check if we are on the login page and redirect to the dashboard if authenticated
+                if (window.location.pathname.endsWith('index.html') || window.location.pathname === '/') {
+                    window.location.href = 'dashboard.html';
+                }
             }
         });
 
-        // Function to calculate and update all totals for the summary boxes
-        function updateSummaryTotals(expenses) {
-            // Recalculate date boundaries every time to ensure "reset" behavior
-            const now = new Date();
-            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-            const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
-            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-            const startOfYear = new Date(now.getFullYear(), 0, 1);
+        // Event Listeners for Forms and Buttons
+        showSignupBtn.addEventListener('click', () => {
+            loginFormContainer.classList.add('hidden');
+            signupFormContainer.classList.remove('hidden');
+        });
 
-            let dailyTotal = 0;
-            let weeklyTotal = 0;
-            let monthlyTotal = 0;
-            let yearlyTotal = 0;
+        showLoginBtn.addEventListener('click', () => {
+            signupFormContainer.classList.add('hidden');
+            loginFormContainer.classList.remove('hidden');
+        });
 
-            expenses.forEach(expense => {
-                const expenseDate = new Date(expense.timestamp);
-                if (expenseDate >= today) {
-                    dailyTotal += expense.amount;
-                }
-                if (expenseDate >= startOfWeek) {
-                    weeklyTotal += expense.amount;
-                }
-                if (expenseDate >= startOfMonth) {
-                    monthlyTotal += expense.amount;
-                }
-                if (expenseDate >= startOfYear) {
-                    yearlyTotal += expense.amount;
-                }
-            });
-
-            dailyTotalSpan.textContent = `₱${dailyTotal.toFixed(2)}`;
-            weeklyTotalSpan.textContent = `₱${weeklyTotal.toFixed(2)}`;
-            monthlyTotalSpan.textContent = `₱${monthlyTotal.toFixed(2)}`;
-            yearlyTotalSpan.textContent = `₱${yearlyTotal.toFixed(2)}`;
-        }
-
-        // Function to render the expenses list based on a given period
-        function renderExpensesList(expenses) {
-            const period = expensesReportTimePeriodSelect.value;
-            let filteredExpenses = [];
-            let reportTotal = 0;
-
-            const now = new Date();
-            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-            const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
-            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-            const startOfYear = new Date(now.getFullYear(), 0, 1);
-
-            if (period === 'all') {
-                filteredExpenses = expenses;
-            } else if (period === 'daily') {
-                filteredExpenses = expenses.filter(exp => new Date(exp.timestamp) >= today);
-            } else if (period === 'weekly') {
-                filteredExpenses = expenses.filter(exp => new Date(exp.timestamp) >= startOfWeek);
-            } else if (period === 'monthly') {
-                filteredExpenses = expenses.filter(exp => new Date(exp.timestamp) >= startOfMonth);
-            } else if (period === 'yearly') {
-                filteredExpenses = expenses.filter(exp => new Date(exp.timestamp) >= startOfYear);
-            }
-            
-            reportTotal = filteredExpenses.reduce((sum, exp) => sum + exp.amount, 0);
-            reportTotalSpan.textContent = `₱${reportTotal.toFixed(2)}`;
-
-            expensesList.innerHTML = '';
-            if (filteredExpenses.length === 0) {
-                noExpensesMessage.classList.remove('hidden');
-                noExpensesMessage.classList.add('text-muted');
-            } else {
-                noExpensesMessage.classList.add('hidden');
-                filteredExpenses.forEach((expense, index) => {
-                    const li = document.createElement('li');
-                    li.className = 'flex justify-between items-center card p-4 rounded-xl shadow-sm transition-colors duration-300 hover:shadow-md';
-                    const expenseTimestamp = new Date(expense.timestamp);
-                    const formattedDate = expenseTimestamp.toLocaleDateString();
-                    li.innerHTML = `
-                        <div class="flex-grow">
-                            <p class="text-lg font-semibold text-primary">₱${parseFloat(expense.amount).toFixed(2)}</p>
-                            <p class="text-sm text-secondary">${expense.description}</p>
-                            <p class="text-xs text-muted">Added on: ${formattedDate}</p>
-                        </div>
-                        <div class="flex-shrink-0 text-right">
-                            <p class="text-sm font-medium text-secondary">${expense.category}</p>
-                            <button data-id="${expense.id}" class="delete-btn text-red-500 hover:text-red-700 transition duration-300">
-                                <i class="fas fa-trash-alt"></i>
-                            </button>
-                        </div>
-                    `;
-                    expensesList.appendChild(li);
-                });
-            }
-        }
-        
-        // Setup real-time listener for expenses
-        function setupRealtimeExpensesListener(userId) {
-            if (!userId) {
-                console.error("User ID is not available. Cannot fetch expenses.");
-                return;
-            }
-            const expensesCollectionPath = `/artifacts/${__app_id}/users/${userId}/expenses`;
-            // Order by timestamp to show the most recent expenses first
-            const q = query(collection(db, expensesCollectionPath), orderBy("timestamp", "desc"));
-            
-            onSnapshot(q, (snapshot) => {
-                const expensesData = [];
-                snapshot.forEach((doc) => {
-                    expensesData.push({ ...doc.data(), id: doc.id });
-                });
-                allExpenses = expensesData;
-                updateSummaryTotals(allExpenses);
-                updateBudgetUI(allExpenses);
-                generateReport(allExpenses);
-                renderExpensesList(allExpenses);
-            }, (error) => {
-                console.error("Error getting expenses: ", error);
-                showMessage("Error", "Failed to load expenses. Please try again.");
-            });
-        }
-        
-        expensesReportTimePeriodSelect.addEventListener('change', () => renderExpensesList(allExpenses));
-
-        // Helper function to update chart colors based on theme
-        function updateChartTheme(chart) {
-            const isDarkTheme = bodyElement.classList.contains('dark-theme');
-            const textColor = isDarkTheme ? '#f9fafb' : '#1f2937';
-            const gridColor = isDarkTheme ? '#4b5563' : '#d1d5db';
-            chart.options.plugins.legend.labels.color = textColor;
-            chart.options.plugins.tooltip.titleColor = textColor;
-            chart.options.plugins.tooltip.bodyColor = textColor;
-            chart.options.plugins.tooltip.backgroundColor = isDarkTheme ? 'rgba(31, 41, 55, 0.8)' : 'rgba(255, 255, 255, 0.8)';
-            chart.options.plugins.tooltip.borderColor = gridColor;
-            if (chart.options.scales.x) chart.options.scales.x.ticks.color = textColor;
-            if (chart.options.scales.y) chart.options.scales.y.ticks.color = textColor;
-            if (chart.options.scales.x) chart.options.scales.x.grid.color = gridColor;
-            if (chart.options.scales.y) chart.options.scales.y.grid.color = gridColor;
-            chart.update();
-        }
-
-        // Generate and show report
-        function generateReport(expensesData) {
-            const period = reportTimePeriodSelect.value;
-            let filteredExpenses = [];
-            const now = new Date();
-
-            // Filter expenses based on the selected period
-            if (period === 'daily') {
-                const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-                filteredExpenses = expensesData.filter(exp => new Date(exp.timestamp) >= today);
-            } else if (period === 'weekly') {
-                const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
-                filteredExpenses = expensesData.filter(exp => new Date(exp.timestamp) >= startOfWeek);
-            } else if (period === 'monthly') {
-                const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-                filteredExpenses = expensesData.filter(exp => new Date(exp.timestamp) >= startOfMonth);
-            } else if (period === 'yearly') {
-                const startOfYear = new Date(now.getFullYear(), 0, 1);
-                filteredExpenses = expensesData.filter(exp => new Date(exp.timestamp) >= startOfYear);
-            }
-
-            // Group expenses by category for the pie chart and summary
-            const reportByCategory = filteredExpenses.reduce((acc, expense) => {
-                const category = expense.category || "Uncategorized";
-                acc[category] = (acc[category] || 0) + expense.amount;
-                return acc;
-            }, {});
-
-            // Prepare data for the line chart (spending over time)
-            let timeLabels = [];
-            let spendingData = [];
-            
-            if (period === 'daily') {
-                const dailyTotals = {};
-                for (let i = 29; i >= 0; i--) {
-                    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
-                    const dateStr = `${d.getMonth() + 1}/${d.getDate()}`;
-                    dailyTotals[dateStr] = 0;
-                }
-                filteredExpenses.forEach(exp => {
-                    const dateStr = `${new Date(exp.timestamp).getMonth() + 1}/${new Date(exp.timestamp).getDate()}`;
-                    if (dailyTotals.hasOwnProperty(dateStr)) {
-                        dailyTotals[dateStr] += exp.amount;
-                    }
-                });
-                timeLabels = Object.keys(dailyTotals);
-                spendingData = Object.values(dailyTotals);
-
-            } else if (period === 'weekly') {
-                const weeklyTotals = {};
-                for (let i = 11; i >= 0; i--) {
-                    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (i * 7));
-                    const weekStr = `${d.getMonth() + 1}/${d.getDate()}`;
-                    weeklyTotals[weekStr] = 0;
-                }
-                filteredExpenses.forEach(exp => {
-                    const expenseDate = new Date(exp.timestamp);
-                    const weekStart = new Date(expenseDate.getFullYear(), expenseDate.getMonth(), expenseDate.getDate() - expenseDate.getDay());
-                    const weekStr = `${weekStart.getMonth() + 1}/${weekStart.getDate()}`;
-                    if (weeklyTotals.hasOwnProperty(weekStr)) {
-                        weeklyTotals[weekStr] += exp.amount;
-                    }
-                });
-                timeLabels = Object.keys(weeklyTotals).map(weekStr => `Week of ${weekStr}`);
-                spendingData = Object.values(weeklyTotals);
-
-            } else if (period === 'monthly') {
-                const monthlyTotals = {};
-                for (let i = 11; i >= 0; i--) {
-                    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-                    const monthStr = d.toLocaleString('default', { month: 'short', year: 'numeric' });
-                    monthlyTotals[monthStr] = 0;
-                }
-                filteredExpenses.forEach(exp => {
-                    const monthStr = new Date(exp.timestamp).toLocaleString('default', { month: 'short', year: 'numeric' });
-                    if (monthlyTotals.hasOwnProperty(monthStr)) {
-                        monthlyTotals[monthStr] += exp.amount;
-                    }
-                });
-                timeLabels = Object.keys(monthlyTotals);
-                spendingData = Object.values(monthlyTotals);
-
-            } else if (period === 'yearly') {
-                const yearlyTotals = {};
-                for (let i = 4; i >= 0; i--) {
-                    const year = now.getFullYear() - i;
-                    yearlyTotals[year] = 0;
-                }
-                filteredExpenses.forEach(exp => {
-                    const year = new Date(exp.timestamp).getFullYear();
-                    if (yearlyTotals.hasOwnProperty(year)) {
-                        yearlyTotals[year] += exp.amount;
-                    }
-                });
-                timeLabels = Object.keys(yearlyTotals);
-                spendingData = Object.values(yearlyTotals);
-            }
-            
-
-            const labels = Object.keys(reportByCategory);
-            const data = Object.values(reportByCategory);
-
-            if (expensePieChart) {
-                expensePieChart.destroy();
-            }
-
-            // Create a pie chart
-            const pieCtx = expensePieChartCanvas.getContext('2d');
-            expensePieChart = new Chart(pieCtx, {
-                type: 'pie',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        data: data,
-                        backgroundColor: [
-                            '#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#6366F1', '#EC4899', '#9CA3AF'
-                        ],
-                        borderColor: bodyElement.classList.contains('dark-theme') ? '#1f2937' : '#ffffff',
-                        borderWidth: 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            labels: {
-                                color: bodyElement.classList.contains('dark-theme') ? '#f9fafb' : '#1f2937',
-                            }
-                        },
-                        tooltip: {
-                            titleColor: bodyElement.classList.contains('dark-theme') ? '#f9fafb' : '#1f2937',
-                            bodyColor: bodyElement.classList.contains('dark-theme') ? '#f9fafb' : '#1f2937',
-                            backgroundColor: bodyElement.classList.contains('dark-theme') ? 'rgba(31, 41, 55, 0.8)' : 'rgba(255, 255, 255, 0.8)',
-                            borderColor: bodyElement.classList.contains('dark-theme') ? '#4b5563' : '#d1d5db',
-                            borderWidth: 1,
-                            boxPadding: 5,
-                        }
-                    }
-                }
-            });
-            
-            if (expenseLineChart) {
-                expenseLineChart.destroy();
-            }
-
-            // Create a line chart
-            const lineCtx = expenseLineChartCanvas.getContext('2d');
-            expenseLineChart = new Chart(lineCtx, {
-                type: 'line',
-                data: {
-                    labels: timeLabels,
-                    datasets: [{
-                        label: 'Spending',
-                        data: spendingData,
-                        borderColor: '#3B82F6',
-                        backgroundColor: 'rgba(59, 130, 246, 0.2)',
-                        tension: 0.1,
-                        fill: true
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            labels: {
-                                color: bodyElement.classList.contains('dark-theme') ? '#f9fafb' : '#1f2937',
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            ticks: { color: bodyElement.classList.contains('dark-theme') ? '#f9fafb' : '#1f2937' },
-                            grid: { color: bodyElement.classList.contains('dark-theme') ? '#4b5563' : '#d1d5db' }
-                        },
-                        y: {
-                            beginAtZero: true,
-                            ticks: { color: bodyElement.classList.contains('dark-theme') ? '#f9fafb' : '#1f2937' },
-                            grid: { color: bodyElement.classList.contains('dark-theme') ? '#4b5563' : '#d1d5db' }
-                        }
-                    }
-                }
-            });
-        }
-        
-        reportTimePeriodSelect.addEventListener('change', () => generateReport(allExpenses));
-
-        // Function to load the user's budget from Firestore
-        async function loadBudget(userId) {
-            if (!userId) return;
-            const budgetDocPath = `/artifacts/${__app_id}/users/${userId}/budget/monthlyBudget`;
-            try {
-                const docSnap = await getDoc(doc(db, budgetDocPath));
-                if (docSnap.exists()) {
-                    monthlyBudget = docSnap.data().amount;
-                    monthlyBudgetInput.value = monthlyBudget;
-                } else {
-                    monthlyBudget = 0; // Reset to 0 if no budget is found
-                }
-                updateBudgetUI(allExpenses);
-            } catch (error) {
-                console.error("Error loading budget:", error);
-            }
-        }
-
-        // Function to update the budget UI (progress bar and totals)
-        function updateBudgetUI(expenses) {
-            const now = new Date();
-            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-            
-            const monthlySpent = expenses
-                .filter(exp => new Date(exp.timestamp) >= startOfMonth)
-                .reduce((sum, exp) => sum + exp.amount, 0);
-
-            monthlySpentSpan.textContent = `₱${monthlySpent.toFixed(2)}`;
-            budgetAmountSpan.textContent = `₱${monthlyBudget.toFixed(2)}`;
-
-            if (monthlyBudget > 0) {
-                const percentage = (monthlySpent / monthlyBudget) * 100;
-                let colorClass = 'bg-blue-600';
-                if (percentage >= 100) {
-                    colorClass = 'bg-red-500';
-                    budgetMessage.textContent = "You have exceeded your budget!";
-                    budgetMessage.classList.remove('text-muted', 'text-green-600');
-                    budgetMessage.classList.add('text-red-500');
-                } else if (percentage >= 80) {
-                    colorClass = 'bg-yellow-500';
-                    budgetMessage.textContent = "Getting close to your budget limit.";
-                    budgetMessage.classList.remove('text-muted', 'text-red-500');
-                    budgetMessage.classList.add('text-yellow-500');
-                } else {
-                    budgetMessage.textContent = "You're doing great with your budget!";
-                    budgetMessage.classList.remove('text-red-500', 'text-yellow-500');
-                    budgetMessage.classList.add('text-muted');
-                }
-                
-                budgetProgressBar.className = `h-4 rounded-full transition-all duration-500 ${colorClass}`;
-                budgetProgressBar.style.width = `${Math.min(percentage, 100)}%`;
-            } else {
-                budgetMessage.textContent = "Set a budget to start tracking!";
-                budgetMessage.classList.remove('text-red-500', 'text-yellow-500');
-                budgetMessage.classList.add('text-muted');
-                budgetProgressBar.style.width = '0%';
-                budgetProgressBar.className = `h-4 rounded-full transition-all duration-500 bg-blue-600`;
-            }
-        }
-
-        // Add a new expense to Firestore
-        addExpenseForm.addEventListener('submit', async (e) => {
+        loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            if (!currentUserId) {
-                showMessage("Authentication Error", "Please log in to add expenses.");
-                return;
-            }
-            const amount = addExpenseForm['expense-amount'].value;
-            const category = addExpenseForm['expense-category'].value;
-            const description = addExpenseForm['expense-description'].value;
+            const email = loginForm['login-email'].value;
+            const password = loginForm['login-password'].value;
             try {
-                const expensesCollectionPath = `/artifacts/${__app_id}/users/${currentUserId}/expenses`;
-                await addDoc(collection(db, expensesCollectionPath), {
-                    amount: parseFloat(amount),
-                    category: category,
-                    description: description,
-                    timestamp: new Date().toISOString()
-                });
-                addExpenseForm.reset();
+                await signInWithEmailAndPassword(auth, email, password);
+                console.log("Login successful! Redirecting...");
+                showMessage("Login Successful", "You have successfully logged in.");
+                // Redirect to dashboard after a short delay to allow the user to see the message
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 1500); 
             } catch (error) {
-                console.error("Error adding expense: ", error);
-                showMessage("Error", "Failed to add expense. Please try again.");
-            }
-        });
-        
-        // Save the budget to Firestore
-        setBudgetForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            if (!currentUserId) {
-                showMessage("Authentication Error", "Please log in to set a budget.");
-                return;
-            }
-            const budget = parseFloat(monthlyBudgetInput.value);
-            if (isNaN(budget) || budget <= 0) {
-                showMessage("Invalid Budget", "Please enter a valid amount greater than 0.");
-                return;
-            }
-            try {
-                const budgetDocPath = `/artifacts/${__app_id}/users/${currentUserId}/budget/monthlyBudget`;
-                await setDoc(doc(db, budgetDocPath), { amount: budget });
-                monthlyBudget = budget;
-                updateBudgetUI(allExpenses);
-                showMessage("Success", "Monthly budget has been saved!");
-            } catch (error) {
-                console.error("Error saving budget:", error);
-                showMessage("Error", "Failed to save budget. Please try again.");
+                console.error("Login failed: ", error);
+                let message = "Login failed. Please check your email and password and try again.";
+                if (error.code === 'auth/user-not-found') {
+                    message = "Account not found. Please sign up for a new account.";
+                }
+                showMessage("Login Failed", message);
             }
         });
 
-        // Delete an expense
-        expensesList.addEventListener('click', async (e) => {
-            if (e.target.closest('.delete-btn')) {
-                const docId = e.target.closest('.delete-btn').dataset.id;
-                if (!currentUserId) {
-                    showMessage("Authentication Error", "Please log in to delete expenses.");
-                    return;
+        signupForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = signupForm['signup-email'].value;
+            const password = signupForm['signup-password'].value;
+            const confirmPassword = signupForm['signup-confirm-password'].value;
+
+            if (password !== confirmPassword) {
+                showMessage("Sign Up Failed", "Passwords do not match. Please try again.");
+                return;
+            }
+
+            try {
+                await createUserWithEmailAndPassword(auth, email, password);
+                console.log("Sign up successful! Redirecting...");
+                showMessage("Sign Up Successful", "Your account has been created.");
+                 // Redirect to dashboard after a short delay
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 1500); 
+            } catch (error) {
+                console.error("Sign up failed: ", error);
+                let message = "Sign up failed. Please try a different email or password.";
+                if (error.code === 'auth/email-already-in-use') {
+                    message = "This email is already in use. Please log in or use a different email.";
+                } else if (error.code === 'auth/weak-password') {
+                    message = "The password is too weak. Please use a stronger password.";
                 }
-                try {
-                    const expensesCollectionPath = `/artifacts/${__app_id}/users/${currentUserId}/expenses`;
-                    await deleteDoc(doc(db, expensesCollectionPath, docId));
-                } catch (error) {
-                    console.error("Error deleting expense: ", error);
-                    showMessage("Error", "Failed to delete expense. Please try again.");
-                }
+                showMessage("Sign Up Failed", message);
             }
         });
         
-        // Logout user
-        logoutBtn.addEventListener('click', async () => {
-            try {
-                await signOut(auth);
-                console.log("User logged out successfully.");
-                // onAuthStateChanged will handle the redirection back to index.html
-            } catch (error) {
-                console.error("Logout failed:", error);
-                showMessage("Logout Failed", "An error occurred during logout. Please try again.");
-            }
+        // Function to toggle password visibility
+        function togglePasswordVisibility(inputElement, iconElement) {
+            const type = inputElement.getAttribute('type') === 'password' ? 'text' : 'password';
+            inputElement.setAttribute('type', type);
+            iconElement.classList.toggle('fa-eye');
+            iconElement.classList.toggle('fa-eye-slash');
+        }
+
+        // Add event listeners for password visibility toggles
+        const loginPasswordInput = document.getElementById('login-password');
+        const toggleLoginPassword = document.getElementById('toggle-login-password');
+        if (toggleLoginPassword) {
+            toggleLoginPassword.addEventListener('click', () => {
+                togglePasswordVisibility(loginPasswordInput, toggleLoginPassword);
+            });
+        }
+        
+        const signupPasswordInput = document.getElementById('signup-password');
+        const toggleSignupPassword = document.getElementById('toggle-signup-password');
+        if (toggleSignupPassword) {
+            toggleSignupPassword.addEventListener('click', () => {
+                togglePasswordVisibility(signupPasswordInput, toggleSignupPassword);
+            });
+        }
+        
+        const confirmPasswordInput = document.getElementById('signup-confirm-password');
+        const toggleConfirmPassword = document.getElementById('toggle-confirm-password');
+        if (toggleConfirmPassword) {
+            toggleConfirmPassword.addEventListener('click', () => {
+                togglePasswordVisibility(confirmPasswordInput, toggleConfirmPassword);
+            });
+        }
+        
+        googleLoginBtn.addEventListener('click', () => {
+            showMessage("Feature Unavailable", "Sign in with Google is temporarily unavailable. Please use the email and password login.");
         });
+
     </script>
 </body>
 </html>
