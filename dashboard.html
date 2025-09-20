@@ -85,6 +85,22 @@
         .modal.open .modal-content {
             transform: translateY(0);
         }
+
+        #report-modal-content {
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #report-modal-list-container {
+            overflow-y: auto;
+            flex-grow: 1;
+            -ms-overflow-style: none;  /* Internet Explorer 10+ */
+            scrollbar-width: none;  /* Firefox */
+        }
+        #report-modal-list-container::-webkit-scrollbar {
+            display: none;  /* Safari and Chrome */
+        }
     </style>
 </head>
 <body class="flex flex-col items-center justify-center min-h-screen p-4 transition-colors duration-300">
@@ -160,7 +176,7 @@
                 </section>
             </div>
 
-            <!-- Right Column: Summary and Report Sections -->
+            <!-- Right Column: Summary Section -->
             <div class="flex flex-col md:w-1/2">
                 <!-- Expense Summary Section -->
                 <section class="mb-8 p-6 section rounded-2xl transition-colors duration-300">
@@ -183,33 +199,14 @@
                             <p id="yearly-total" class="text-xl font-bold text-blue-600 dark:text-blue-400">₱0.00</p>
                         </div>
                     </div>
-                </section>
-                
-                <!-- Report Section -->
-                <section class="p-6 section rounded-2xl mb-8 transition-colors duration-300">
-                    <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
-                        <h2 class="text-2xl font-semibold text-primary mb-2 sm:mb-0">Report Section</h2>
-                        <div class="flex items-center space-x-2 mt-2 sm:mt-0">
-                            <span class="text-secondary text-sm font-medium">View Report By:</span>
-                            <select id="expenses-report-time-period" class="px-3 py-1 rounded-md border border-color input-field">
-                                <option value="all">All Time</option>
-                                <option value="daily" selected>Today</option>
-                                <option value="weekly">This Week</option>
-                                <option value="monthly">This Month</option>
-                                <option value="yearly">This Year</option>
-                            </select>
-                        </div>
+                    <div class="mt-6 text-center">
+                        <button id="view-expenses-btn" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition duration-300">View All Expenses</button>
                     </div>
-                    <p class="text-lg font-bold text-primary mb-4">Total for this period: <span id="report-total" class="text-blue-600 dark:text-blue-400">₱0.00</span></p>
-                    <ul id="expenses-list" class="space-y-4">
-                        <!-- Expenses will be dynamically added here -->
-                        <li class="text-muted text-center py-4" id="no-expenses-message">No expenses added yet.</li>
-                    </ul>
                 </section>
             </div>
         </div>
 
-        <!-- Charts Section: Remains full-width below the two main columns -->
+        <!-- Charts Section: Now smaller and with updated axes -->
         <section class="mb-8 p-6 section rounded-2xl transition-colors duration-300">
             <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
                 <h2 class="text-2xl font-semibold text-primary mb-2 sm:mb-0">Statistics</h2>
@@ -221,8 +218,8 @@
                 </select>
             </div>
             
-            <!-- New container to minimize the charts section -->
-            <div class="w-full max-w-3xl mx-auto space-y-8">
+            <!-- Container to make charts smaller -->
+            <div class="w-full max-w-xl mx-auto space-y-8">
                 <div>
                     <h4 class="text-xl font-semibold text-primary text-center mb-2">Category Breakdown</h4>
                     <canvas id="expense-pie-chart"></canvas>
@@ -233,14 +230,82 @@
                 </div>
             </div>
         </section>
+
+        <!-- Feedback & Rating Section -->
+        <section class="mb-8 p-6 section rounded-2xl transition-colors duration-300">
+            <h2 class="text-2xl font-semibold text-primary mb-4">Share Your Feedback</h2>
+            <form id="feedback-form" class="space-y-4">
+                <div>
+                    <label class="block text-secondary font-medium mb-2">Your Rating</label>
+                    <div id="rating-stars" class="flex space-x-1">
+                        <i class="fas fa-star text-2xl cursor-pointer text-gray-400" data-rating="1"></i>
+                        <i class="fas fa-star text-2xl cursor-pointer text-gray-400" data-rating="2"></i>
+                        <i class="fas fa-star text-2xl cursor-pointer text-gray-400" data-rating="3"></i>
+                        <i class="fas fa-star text-2xl cursor-pointer text-gray-400" data-rating="4"></i>
+                        <i class="fas fa-star text-2xl cursor-pointer text-gray-400" data-rating="5"></i>
+                    </div>
+                    <input type="hidden" id="feedback-rating" required>
+                </div>
+                <div>
+                    <label for="feedback-comment" class="block text-secondary font-medium mb-2">Your Comments</label>
+                    <textarea id="feedback-comment" rows="4" required class="w-full px-4 py-2 border border-color rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 input-field transition duration-300" placeholder="Tell us what you think!"></textarea>
+                </div>
+                <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition duration-300">Submit Feedback</button>
+            </form>
+            <div class="mt-8">
+                <h3 class="text-xl font-semibold text-primary mb-4">What others are saying...</h3>
+                <ul id="feedback-list" class="space-y-4">
+                    <!-- Feedback will be dynamically added here -->
+                    <li id="no-feedback-message" class="text-center text-muted">No feedback yet. Be the first to share your thoughts!</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="text-center py-4 mt-8 w-full">
+            <p class="text-sm text-muted">© 2025 Daily Expenses Tracker. All rights reserved.</p>
+        </footer>
+
     </div>
 
-    <!-- Modal for messages -->
+    <!-- Modal for general messages -->
     <div id="messageModal" class="modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 invisible opacity-0">
         <div class="modal-content card p-6 rounded-xl shadow-lg w-full max-w-sm text-center">
             <h3 id="modalTitle" class="text-xl font-bold mb-3 text-primary"></h3>
             <p id="modalMessage" class="text-secondary mb-4"></p>
             <button id="closeModalBtn" class="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition duration-300">OK</button>
+        </div>
+    </div>
+
+    <!-- Modal for Expense Report -->
+    <div id="reportModal" class="modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 invisible opacity-0">
+        <div id="report-modal-content" class="modal-content card p-6 rounded-xl shadow-lg w-full max-w-2xl text-left">
+            <div class="flex justify-between items-center mb-4 border-b pb-4 border-color">
+                <h3 class="text-2xl font-bold text-primary">Expense Report</h3>
+                <button id="closeReportModalBtn" class="text-secondary hover:text-primary transition duration-300">
+                    <i class="fas fa-times fa-2x"></i>
+                </button>
+            </div>
+            
+            <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
+                <span class="text-secondary text-sm font-medium">View Report By:</span>
+                <select id="expenses-report-time-period" class="px-3 py-1 rounded-md border border-color input-field">
+                    <option value="all">All Time</option>
+                    <option value="daily" selected>Today</option>
+                    <option value="weekly">This Week</option>
+                    <option value="monthly">This Month</option>
+                    <option value="yearly">This Year</option>
+                </select>
+            </div>
+
+            <p class="text-lg font-bold text-primary mb-4">Total for this period: <span id="report-total" class="text-blue-600 dark:text-blue-400">₱0.00</span></p>
+
+            <div id="report-modal-list-container" class="space-y-4">
+                <ul id="expenses-list">
+                    <!-- Expenses will be dynamically added here -->
+                    <li class="text-muted text-center py-4" id="no-expenses-message">No expenses added yet.</li>
+                </ul>
+            </div>
         </div>
     </div>
     
@@ -275,7 +340,7 @@
         const moonIcon = document.getElementById('moon-icon');
         const sunIcon = document.getElementById('sun-icon');
         const bodyElement = document.body;
-
+        
         // New budget elements
         const setBudgetForm = document.getElementById('set-budget-form');
         const monthlyBudgetInput = document.getElementById('monthly-budget-input');
@@ -283,6 +348,19 @@
         const monthlySpentSpan = document.getElementById('monthly-spent');
         const budgetProgressBar = document.getElementById('budget-progress-bar');
         const budgetMessage = document.getElementById('budgetMessage');
+
+        // New modal elements for report section
+        const viewExpensesBtn = document.getElementById('view-expenses-btn');
+        const reportModal = document.getElementById('reportModal');
+        const closeReportModalBtn = document.getElementById('closeReportModalBtn');
+
+        // New feedback elements
+        const feedbackForm = document.getElementById('feedback-form');
+        const ratingStars = document.getElementById('rating-stars');
+        const feedbackRatingInput = document.getElementById('feedback-rating');
+        const feedbackCommentInput = document.getElementById('feedback-comment');
+        const feedbackList = document.getElementById('feedback-list');
+        const noFeedbackMessage = document.getElementById('no-feedback-message');
 
         let db, auth;
         let currentUserId = null;
@@ -324,7 +402,7 @@
             }
         });
 
-        // Custom Modal Function
+        // Custom Modal Function for general messages
         function showMessage(title, message, modalId = 'messageModal') {
             const modal = document.getElementById(modalId);
             if (modalId === 'messageModal') {
@@ -342,6 +420,19 @@
         }
 
         closeModalBtn.addEventListener('click', () => hideMessage());
+
+        // Modal for Report Section
+        viewExpensesBtn.addEventListener('click', () => {
+            reportModal.classList.add('open', 'visible', 'opacity-100');
+            reportModal.classList.remove('invisible', 'opacity-0');
+            // Ensure the report is rendered correctly when the modal opens
+            renderExpensesList(allExpenses);
+        });
+
+        closeReportModalBtn.addEventListener('click', () => {
+            reportModal.classList.remove('open', 'visible', 'opacity-100');
+            reportModal.classList.add('invisible', 'opacity-0');
+        });
 
         // Initialize Firebase with the provided config
         try {
@@ -369,6 +460,7 @@
                 // Load budget and expenses
                 await loadBudget(currentUserId);
                 setupRealtimeExpensesListener(currentUserId);
+                setupRealtimeFeedbackListener();
             } else {
                 // If the user is not logged in, redirect to the login page
                 window.location.href = 'index.html';
@@ -494,7 +586,10 @@
                 updateSummaryTotals(allExpenses);
                 updateBudgetUI(allExpenses);
                 generateReport(allExpenses);
-                renderExpensesList(allExpenses);
+                // Also update the report list if the modal is open
+                if (reportModal.classList.contains('open')) {
+                    renderExpensesList(allExpenses);
+                }
             }, (error) => {
                 console.error("Error getting expenses: ", error);
                 showMessage("Error", "Failed to load expenses. Please try again.");
@@ -513,10 +608,17 @@
             chart.options.plugins.tooltip.bodyColor = textColor;
             chart.options.plugins.tooltip.backgroundColor = isDarkTheme ? 'rgba(31, 41, 55, 0.8)' : 'rgba(255, 255, 255, 0.8)';
             chart.options.plugins.tooltip.borderColor = gridColor;
-            chart.options.scales.x.ticks.color = textColor;
-            chart.options.scales.y.ticks.color = textColor;
-            chart.options.scales.x.grid.color = gridColor;
-            chart.options.scales.y.grid.color = gridColor;
+            
+            // Handle different scales for different charts
+            if (chart.options.scales.x) {
+                chart.options.scales.x.ticks.color = textColor;
+                chart.options.scales.x.grid.color = gridColor;
+            }
+            if (chart.options.scales.y) {
+                chart.options.scales.y.ticks.color = textColor;
+                chart.options.scales.y.grid.color = gridColor;
+            }
+            
             chart.update();
         }
 
@@ -550,42 +652,49 @@
 
             // Prepare data for the line chart (spending over time)
             let timeLabels = [];
-            let spendingData = [];
-            
-            if (period === 'daily') {
-                const dailyTotals = {};
-                for (let i = 29; i >= 0; i--) {
-                    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
-                    const dateStr = `${d.getMonth() + 1}/${d.getDate()}`;
-                    dailyTotals[dateStr] = 0;
-                }
-                filteredExpenses.forEach(exp => {
-                    const dateStr = `${new Date(exp.timestamp).getMonth() + 1}/${new Date(exp.timestamp).getDate()}`;
-                    if (dailyTotals.hasOwnProperty(dateStr)) {
-                        dailyTotals[dateStr] += exp.amount;
-                    }
-                });
-                timeLabels = Object.keys(dailyTotals);
-                spendingData = Object.values(dailyTotals);
+            let spendingDataByCategories = {};
+            const categories = Array.from(new Set(filteredExpenses.map(exp => exp.category)));
 
-            } else if (period === 'weekly') {
-                const weeklyTotals = {};
-                for (let i = 11; i >= 0; i--) {
-                    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (i * 7));
-                    const weekStr = `${d.getMonth() + 1}/${d.getDate()}`;
-                    weeklyTotals[weekStr] = 0;
+            const colors = {
+                'Food': '#3B82F6',
+                'Shopping': '#EF4444',
+                'Bills': '#10B981',
+                'Entertainment': '#F59E0B',
+                'Transportation': '#6366F1',
+                'Other': '#9CA3AF'
+            };
+
+            if (period === 'daily') {
+                for (let i = 0; i < 24; i++) {
+                    const hour = new Date(now.getFullYear(), now.getMonth(), now.getDate(), i);
+                    timeLabels.push(hour.toLocaleString('default', { hour: 'numeric', hour12: true }));
                 }
+                categories.forEach(category => {
+                    spendingDataByCategories[category] = new Array(24).fill(0);
+                });
                 filteredExpenses.forEach(exp => {
                     const expenseDate = new Date(exp.timestamp);
-                    const weekStart = new Date(expenseDate.getFullYear(), expenseDate.getMonth(), expenseDate.getDate() - expenseDate.getDay());
-                    const weekStr = `${weekStart.getMonth() + 1}/${weekStart.getDate()}`;
-                    if (weeklyTotals.hasOwnProperty(weekStr)) {
-                        weeklyTotals[weekStr] += exp.amount;
+                    const hourIndex = expenseDate.getHours();
+                    if (spendingDataByCategories[exp.category]) {
+                        spendingDataByCategories[exp.category][hourIndex] += exp.amount;
                     }
                 });
-                timeLabels = Object.keys(weeklyTotals).map(weekStr => `Week of ${weekStr}`);
-                spendingData = Object.values(weeklyTotals);
-
+            } else if (period === 'weekly') {
+                const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                for (let i = 0; i < 7; i++) {
+                    const day = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay() + i);
+                    timeLabels.push(daysOfWeek[i]);
+                }
+                categories.forEach(category => {
+                    spendingDataByCategories[category] = new Array(7).fill(0);
+                });
+                filteredExpenses.forEach(exp => {
+                    const expenseDate = new Date(exp.timestamp);
+                    const dayIndex = expenseDate.getDay();
+                    if (spendingDataByCategories[exp.category]) {
+                        spendingDataByCategories[exp.category][dayIndex] += exp.amount;
+                    }
+                });
             } else if (period === 'monthly') {
                 const monthlyTotals = {};
                 for (let i = 11; i >= 0; i--) {
@@ -600,7 +709,7 @@
                     }
                 });
                 timeLabels = Object.keys(monthlyTotals);
-                spendingData = Object.values(monthlyTotals);
+                spendingDataByCategories['Total'] = Object.values(monthlyTotals);
 
             } else if (period === 'yearly') {
                 const yearlyTotals = {};
@@ -615,9 +724,17 @@
                     }
                 });
                 timeLabels = Object.keys(yearlyTotals);
-                spendingData = Object.values(yearlyTotals);
+                spendingDataByCategories['Total'] = Object.values(yearlyTotals);
             }
             
+            const datasets = Object.keys(spendingDataByCategories).map(category => ({
+                label: category,
+                data: spendingDataByCategories[category],
+                borderColor: colors[category] || '#9CA3AF',
+                backgroundColor: (colors[category] || '#9CA3AF') + '33', // 20% opacity
+                tension: 0.1,
+                fill: true
+            }));
 
             const labels = Object.keys(reportByCategory);
             const data = Object.values(reportByCategory);
@@ -671,14 +788,7 @@
                 type: 'line',
                 data: {
                     labels: timeLabels,
-                    datasets: [{
-                        label: 'Spending',
-                        data: spendingData,
-                        borderColor: '#3B82F6',
-                        backgroundColor: 'rgba(59, 130, 246, 0.2)',
-                        tension: 0.1,
-                        fill: true
-                    }]
+                    datasets: datasets
                 },
                 options: {
                     responsive: true,
@@ -691,10 +801,20 @@
                     },
                     scales: {
                         x: {
+                            title: {
+                                display: true,
+                                text: period === 'daily' ? 'Time (Hours)' : (period === 'weekly' ? 'Days of the Week' : 'Time Period'),
+                                color: bodyElement.classList.contains('dark-theme') ? '#f9fafb' : '#1f2937'
+                            },
                             ticks: { color: bodyElement.classList.contains('dark-theme') ? '#f9fafb' : '#1f2937' },
                             grid: { color: bodyElement.classList.contains('dark-theme') ? '#4b5563' : '#d1d5db' }
                         },
                         y: {
+                            title: {
+                                display: true,
+                                text: 'Amount Spent (₱)',
+                                color: bodyElement.classList.contains('dark-theme') ? '#f9fafb' : '#1f2937'
+                            },
                             beginAtZero: true,
                             ticks: { color: bodyElement.classList.contains('dark-theme') ? '#f9fafb' : '#1f2937' },
                             grid: { color: bodyElement.classList.contains('dark-theme') ? '#4b5563' : '#d1d5db' }
@@ -844,6 +964,91 @@
                 showMessage("Logout Failed", "An error occurred during logout. Please try again.");
             }
         });
+
+        // --- Feedback and Rating Section Logic ---
+        let currentRating = 0;
+
+        ratingStars.addEventListener('click', (e) => {
+            const star = e.target.closest('i');
+            if (star) {
+                const rating = parseInt(star.dataset.rating);
+                currentRating = rating;
+                feedbackRatingInput.value = rating;
+                updateStarColors(rating);
+            }
+        });
+
+        function updateStarColors(rating) {
+            const stars = ratingStars.querySelectorAll('i');
+            stars.forEach((star) => {
+                if (parseInt(star.dataset.rating) <= rating) {
+                    star.classList.remove('text-gray-400');
+                    star.classList.add('text-yellow-400');
+                } else {
+                    star.classList.remove('text-yellow-400');
+                    star.classList.add('text-gray-400');
+                }
+            });
+        }
+
+        feedbackForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!currentUserId) {
+                showMessage("Authentication Error", "Please log in to submit feedback.");
+                return;
+            }
+            if (currentRating === 0) {
+                showMessage("Rating Required", "Please select a rating before submitting.");
+                return;
+            }
+            const comment = feedbackCommentInput.value;
+            const feedbackCollectionPath = `/artifacts/${__app_id}/public/data/feedback`;
+            try {
+                await addDoc(collection(db, feedbackCollectionPath), {
+                    rating: currentRating,
+                    comment: comment,
+                    timestamp: new Date().toISOString(),
+                    userEmail: auth.currentUser.email
+                });
+                showMessage("Thank you!", "Your feedback has been submitted successfully.");
+                feedbackForm.reset();
+                currentRating = 0;
+                updateStarColors(0);
+            } catch (error) {
+                console.error("Error submitting feedback:", error);
+                showMessage("Error", "Failed to submit feedback. Please try again.");
+            }
+        });
+
+        function setupRealtimeFeedbackListener() {
+            const feedbackCollectionPath = `/artifacts/${__app_id}/public/data/feedback`;
+            const q = query(collection(db, feedbackCollectionPath), orderBy("timestamp", "desc"));
+            onSnapshot(q, (snapshot) => {
+                feedbackList.innerHTML = '';
+                if (snapshot.empty) {
+                    noFeedbackMessage.classList.remove('hidden');
+                } else {
+                    noFeedbackMessage.classList.add('hidden');
+                    snapshot.forEach((doc) => {
+                        const feedback = doc.data();
+                        const li = document.createElement('li');
+                        li.className = 'p-4 rounded-xl card shadow-sm';
+                        li.innerHTML = `
+                            <div class="flex items-center mb-2">
+                                ${Array(feedback.rating).fill('<i class="fas fa-star text-yellow-400"></i>').join('')}
+                                ${Array(5 - feedback.rating).fill('<i class="far fa-star text-gray-400"></i>').join('')}
+                            </div>
+                            <p class="text-secondary text-sm mb-2">${feedback.comment}</p>
+                            <p class="text-xs text-muted">by ${feedback.userEmail || 'Anonymous'} on ${new Date(feedback.timestamp).toLocaleDateString()}</p>
+                        `;
+                        feedbackList.appendChild(li);
+                    });
+                }
+            }, (error) => {
+                console.error("Error getting feedback: ", error);
+            });
+        }
+
     </script>
 </body>
 </html>
