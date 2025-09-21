@@ -269,11 +269,35 @@
     </div>
 
     <!-- Modal for general messages -->
-    <div id="messageModal" class="modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 invisible opacity-0">
+    <div id="messageModal" class="modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] invisible opacity-0">
         <div class="modal-content card p-6 rounded-xl shadow-lg w-full max-w-sm text-center">
             <h3 id="modalTitle" class="text-xl font-bold mb-3 text-primary"></h3>
             <p id="modalMessage" class="text-secondary mb-4"></p>
             <button id="closeModalBtn" class="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition duration-300">OK</button>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal for Deleting Expense -->
+    <div id="confirmationModal" class="modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] invisible opacity-0">
+        <div class="modal-content card p-6 rounded-xl shadow-lg w-full max-w-sm text-center">
+            <h3 class="text-xl font-bold mb-3 text-primary">Confirm Deletion</h3>
+            <p class="text-secondary mb-6">Are you sure you want to delete this expense? This action cannot be undone.</p>
+            <div class="flex justify-center space-x-4">
+                <button id="cancelDeleteBtn" class="px-6 py-2 bg-gray-500 text-white rounded-lg font-semibold hover:bg-gray-600 transition duration-300">Cancel</button>
+                <button id="confirmDeleteBtn" class="px-6 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition duration-300">Delete</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Confirmation Modal for Deleting Feedback -->
+    <div id="feedbackConfirmationModal" class="modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] invisible opacity-0">
+        <div class="modal-content card p-6 rounded-xl shadow-lg w-full max-w-sm text-center">
+            <h3 class="text-xl font-bold mb-3 text-primary">Delete Feedback</h3>
+            <p class="text-secondary mb-6">Are you sure you want to delete your feedback? This action cannot be undone.</p>
+            <div class="flex justify-center space-x-4">
+                <button id="cancelFeedbackDeleteBtn" class="px-6 py-2 bg-gray-500 text-white rounded-lg font-semibold hover:bg-gray-600 transition duration-300">Cancel</button>
+                <button id="confirmFeedbackDeleteBtn" class="px-6 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition duration-300">Delete</button>
+            </div>
         </div>
     </div>
 
@@ -347,12 +371,23 @@
         const budgetAmountSpan = document.getElementById('budget-amount');
         const monthlySpentSpan = document.getElementById('monthly-spent');
         const budgetProgressBar = document.getElementById('budget-progress-bar');
-        const budgetMessage = document.getElementById('budgetMessage');
+        const budgetMessage = document.getElementById('budget-message');
 
         // New modal elements for report section
         const viewExpensesBtn = document.getElementById('view-expenses-btn');
         const reportModal = document.getElementById('reportModal');
         const closeReportModalBtn = document.getElementById('closeReportModalBtn');
+
+        // Confirmation modal elements
+        const confirmationModal = document.getElementById('confirmationModal');
+        const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+
+        // Feedback confirmation modal elements
+        const feedbackConfirmationModal = document.getElementById('feedbackConfirmationModal');
+        const cancelFeedbackDeleteBtn = document.getElementById('cancelFeedbackDeleteBtn');
+        const confirmFeedbackDeleteBtn = document.getElementById('confirmFeedbackDeleteBtn');
+
 
         // New feedback elements
         const feedbackForm = document.getElementById('feedback-form');
@@ -368,6 +403,8 @@
         let expensePieChart;
         let expenseLineChart;
         let monthlyBudget = 0; // Store the user's budget
+        let expenseIdToDelete = null; // Store the ID of the expense to be deleted
+        let feedbackIdToDelete = null; // Store the ID of the feedback to be deleted
 
         // --- Dark/Light Mode Logic ---
         const themePreference = localStorage.getItem('theme');
@@ -402,37 +439,34 @@
             }
         });
 
-        // Custom Modal Function for general messages
-        function showMessage(title, message, modalId = 'messageModal') {
+        // Custom Modal Functions
+        function showModal(modalId) {
             const modal = document.getElementById(modalId);
-            if (modalId === 'messageModal') {
-                modalTitle.textContent = title;
-                modalMessage.textContent = message;
-                modal.classList.add('open', 'visible', 'opacity-100');
-                modal.classList.remove('invisible', 'opacity-0');
-            }
+            modal.classList.add('open', 'visible', 'opacity-100');
+            modal.classList.remove('invisible', 'opacity-0');
         }
 
-        function hideMessage(modalId = 'messageModal') {
+        function hideModal(modalId) {
             const modal = document.getElementById(modalId);
             modal.classList.remove('open', 'visible', 'opacity-100');
             modal.classList.add('invisible', 'opacity-0');
         }
 
-        closeModalBtn.addEventListener('click', () => hideMessage());
+        function showMessage(title, message) {
+            modalTitle.textContent = title;
+            modalMessage.textContent = message;
+            showModal('messageModal');
+        }
+
+        closeModalBtn.addEventListener('click', () => hideModal('messageModal'));
 
         // Modal for Report Section
         viewExpensesBtn.addEventListener('click', () => {
-            reportModal.classList.add('open', 'visible', 'opacity-100');
-            reportModal.classList.remove('invisible', 'opacity-0');
-            // Ensure the report is rendered correctly when the modal opens
+            showModal('reportModal');
             renderExpensesList(allExpenses);
         });
 
-        closeReportModalBtn.addEventListener('click', () => {
-            reportModal.classList.remove('open', 'visible', 'opacity-100');
-            reportModal.classList.add('invisible', 'opacity-0');
-        });
+        closeReportModalBtn.addEventListener('click', () => hideModal('reportModal'));
 
         // Initialize Firebase with the provided config
         try {
@@ -469,32 +503,20 @@
 
         // Function to calculate and update all totals for the summary boxes
         function updateSummaryTotals(expenses) {
-            // Recalculate date boundaries every time to ensure "reset" behavior
             const now = new Date();
             const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
             const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
             const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
             const startOfYear = new Date(now.getFullYear(), 0, 1);
 
-            let dailyTotal = 0;
-            let weeklyTotal = 0;
-            let monthlyTotal = 0;
-            let yearlyTotal = 0;
+            let dailyTotal = 0, weeklyTotal = 0, monthlyTotal = 0, yearlyTotal = 0;
 
             expenses.forEach(expense => {
                 const expenseDate = new Date(expense.timestamp);
-                if (expenseDate >= today) {
-                    dailyTotal += expense.amount;
-                }
-                if (expenseDate >= startOfWeek) {
-                    weeklyTotal += expense.amount;
-                }
-                if (expenseDate >= startOfMonth) {
-                    monthlyTotal += expense.amount;
-                }
-                if (expenseDate >= startOfYear) {
-                    yearlyTotal += expense.amount;
-                }
+                if (expenseDate >= today) dailyTotal += expense.amount;
+                if (expenseDate >= startOfWeek) weeklyTotal += expense.amount;
+                if (expenseDate >= startOfMonth) monthlyTotal += expense.amount;
+                if (expenseDate >= startOfYear) yearlyTotal += expense.amount;
             });
 
             dailyTotalSpan.textContent = `₱${dailyTotal.toFixed(2)}`;
@@ -507,46 +529,30 @@
         function renderExpensesList(expenses) {
             const period = expensesReportTimePeriodSelect.value;
             let filteredExpenses = [];
-            let reportTotal = 0;
-
             const now = new Date();
-            // Start of Today
             const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-            // Start of This Week (Sunday)
             const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
-            // Start of This Month
             const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-            // Start of This Year
             const startOfYear = new Date(now.getFullYear(), 0, 1);
 
-            // --- Expense Report Validation / Filtering ---
-            // This is where the code ensures the list shows only the expenses for the selected time period.
-            if (period === 'all') {
-                filteredExpenses = expenses;
-            } else if (period === 'daily') {
-                filteredExpenses = expenses.filter(exp => new Date(exp.timestamp) >= today);
-            } else if (period === 'weekly') {
-                filteredExpenses = expenses.filter(exp => new Date(exp.timestamp) >= startOfWeek);
-            } else if (period === 'monthly') {
-                filteredExpenses = expenses.filter(exp => new Date(exp.timestamp) >= startOfMonth);
-            } else if (period === 'yearly') {
-                filteredExpenses = expenses.filter(exp => new Date(exp.timestamp) >= startOfYear);
-            }
+            if (period === 'all') filteredExpenses = expenses;
+            else if (period === 'daily') filteredExpenses = expenses.filter(exp => new Date(exp.timestamp) >= today);
+            else if (period === 'weekly') filteredExpenses = expenses.filter(exp => new Date(exp.timestamp) >= startOfWeek);
+            else if (period === 'monthly') filteredExpenses = expenses.filter(exp => new Date(exp.timestamp) >= startOfMonth);
+            else if (period === 'yearly') filteredExpenses = expenses.filter(exp => new Date(exp.timestamp) >= startOfYear);
             
-            reportTotal = filteredExpenses.reduce((sum, exp) => sum + exp.amount, 0);
+            const reportTotal = filteredExpenses.reduce((sum, exp) => sum + exp.amount, 0);
             reportTotalSpan.textContent = `₱${reportTotal.toFixed(2)}`;
 
             expensesList.innerHTML = '';
             if (filteredExpenses.length === 0) {
                 noExpensesMessage.classList.remove('hidden');
-                noExpensesMessage.classList.add('text-muted');
             } else {
                 noExpensesMessage.classList.add('hidden');
-                filteredExpenses.forEach((expense, index) => {
+                filteredExpenses.forEach((expense) => {
                     const li = document.createElement('li');
                     li.className = 'flex justify-between items-center card p-4 rounded-xl shadow-sm transition-colors duration-300 hover:shadow-md';
-                    const expenseTimestamp = new Date(expense.timestamp);
-                    const formattedDate = expenseTimestamp.toLocaleDateString();
+                    const formattedDate = new Date(expense.timestamp).toLocaleDateString();
                     li.innerHTML = `
                         <div class="flex-grow">
                             <p class="text-lg font-semibold text-primary">₱${parseFloat(expense.amount).toFixed(2)}</p>
@@ -567,26 +573,14 @@
         
         // Setup real-time listener for expenses
         function setupRealtimeExpensesListener(userId) {
-            if (!userId) {
-                console.error("User ID is not available. Cannot fetch expenses.");
-                return;
-            }
-            const expensesCollectionPath = `/artifacts/${__app_id}/users/${userId}/expenses`;
-            // Order by timestamp to show the most recent expenses first
-            const q = query(collection(db, expensesCollectionPath), orderBy("timestamp", "desc"));
+            if (!userId) return;
+            const q = query(collection(db, 'artifacts', __app_id, 'users', userId, 'expenses'), orderBy("timestamp", "desc"));
             
-            // This is the Firestore real-time listener.
-            // It automatically updates the data and redraws the charts whenever a change occurs.
             onSnapshot(q, (snapshot) => {
-                const expensesData = [];
-                snapshot.forEach((doc) => {
-                    expensesData.push({ ...doc.data(), id: doc.id });
-                });
-                allExpenses = expensesData;
+                allExpenses = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
                 updateSummaryTotals(allExpenses);
                 updateBudgetUI(allExpenses);
                 generateReport(allExpenses);
-                // Also update the report list if the modal is open
                 if (reportModal.classList.contains('open')) {
                     renderExpensesList(allExpenses);
                 }
@@ -604,31 +598,26 @@
             const textColor = isDarkTheme ? '#f9fafb' : '#1f2937';
             const gridColor = isDarkTheme ? '#4b5563' : '#d1d5db';
             chart.options.plugins.legend.labels.color = textColor;
-            chart.options.plugins.tooltip.titleColor = textColor;
-            chart.options.plugins.tooltip.bodyColor = textColor;
-            chart.options.plugins.tooltip.backgroundColor = isDarkTheme ? 'rgba(31, 41, 55, 0.8)' : 'rgba(255, 255, 255, 0.8)';
-            chart.options.plugins.tooltip.borderColor = gridColor;
-            
-            // Handle different scales for different charts
             if (chart.options.scales.x) {
                 chart.options.scales.x.ticks.color = textColor;
                 chart.options.scales.x.grid.color = gridColor;
+                if(chart.options.scales.x.title) chart.options.scales.x.title.color = textColor;
             }
             if (chart.options.scales.y) {
                 chart.options.scales.y.ticks.color = textColor;
                 chart.options.scales.y.grid.color = gridColor;
+                if(chart.options.scales.y.title) chart.options.scales.y.title.color = textColor;
             }
-            
             chart.update();
         }
 
         // Generate and show report
         function generateReport(expensesData) {
+            // This function remains the same as your updated version
             const period = reportTimePeriodSelect.value;
             let filteredExpenses = [];
             const now = new Date();
 
-            // Filter expenses based on the selected period
             if (period === 'daily') {
                 const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
                 filteredExpenses = expensesData.filter(exp => new Date(exp.timestamp) >= today);
@@ -643,85 +632,49 @@
                 filteredExpenses = expensesData.filter(exp => new Date(exp.timestamp) >= startOfYear);
             }
 
-            // Group expenses by category for the pie chart and summary
             const reportByCategory = filteredExpenses.reduce((acc, expense) => {
-                const category = expense.category || "Uncategorized";
-                acc[category] = (acc[category] || 0) + expense.amount;
+                acc[expense.category] = (acc[expense.category] || 0) + expense.amount;
                 return acc;
             }, {});
 
-            // Prepare data for the line chart (spending over time)
             let timeLabels = [];
             let spendingDataByCategories = {};
             const categories = Array.from(new Set(filteredExpenses.map(exp => exp.category)));
 
-            const colors = {
-                'Food': '#3B82F6',
-                'Shopping': '#EF4444',
-                'Bills': '#10B981',
-                'Entertainment': '#F59E0B',
-                'Transportation': '#6366F1',
-                'Other': '#9CA3AF'
-            };
+            const colors = { 'Food': '#3B82F6', 'Shopping': '#EF4444', 'Bills': '#10B981', 'Entertainment': '#F59E0B', 'Transportation': '#6366F1', 'Other': '#9CA3AF' };
 
             if (period === 'daily') {
-                for (let i = 0; i < 24; i++) {
-                    const hour = new Date(now.getFullYear(), now.getMonth(), now.getDate(), i);
-                    timeLabels.push(hour.toLocaleString('default', { hour: 'numeric', hour12: true }));
-                }
-                categories.forEach(category => {
-                    spendingDataByCategories[category] = new Array(24).fill(0);
-                });
+                timeLabels = Array.from({length: 24}, (_, i) => new Date(0,0,0,i).toLocaleTimeString('en-US', {hour: 'numeric', hour12: true}));
+                categories.forEach(cat => { spendingDataByCategories[cat] = new Array(24).fill(0); });
                 filteredExpenses.forEach(exp => {
-                    const expenseDate = new Date(exp.timestamp);
-                    const hourIndex = expenseDate.getHours();
-                    if (spendingDataByCategories[exp.category]) {
-                        spendingDataByCategories[exp.category][hourIndex] += exp.amount;
-                    }
+                    const hour = new Date(exp.timestamp).getHours();
+                    if(spendingDataByCategories[exp.category]) spendingDataByCategories[exp.category][hour] += exp.amount;
                 });
             } else if (period === 'weekly') {
-                const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-                for (let i = 0; i < 7; i++) {
-                    const day = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay() + i);
-                    timeLabels.push(daysOfWeek[i]);
-                }
-                categories.forEach(category => {
-                    spendingDataByCategories[category] = new Array(7).fill(0);
-                });
+                timeLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                categories.forEach(cat => { spendingDataByCategories[cat] = new Array(7).fill(0); });
                 filteredExpenses.forEach(exp => {
-                    const expenseDate = new Date(exp.timestamp);
-                    const dayIndex = expenseDate.getDay();
-                    if (spendingDataByCategories[exp.category]) {
-                        spendingDataByCategories[exp.category][dayIndex] += exp.amount;
-                    }
+                    const day = new Date(exp.timestamp).getDay();
+                    if(spendingDataByCategories[exp.category]) spendingDataByCategories[exp.category][day] += exp.amount;
                 });
             } else if (period === 'monthly') {
-                const monthlyTotals = {};
-                for (let i = 11; i >= 0; i--) {
-                    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-                    const monthStr = d.toLocaleString('default', { month: 'short', year: 'numeric' });
-                    monthlyTotals[monthStr] = 0;
-                }
-                filteredExpenses.forEach(exp => {
-                    const monthStr = new Date(exp.timestamp).toLocaleString('default', { month: 'short', year: 'numeric' });
-                    if (monthlyTotals.hasOwnProperty(monthStr)) {
-                        monthlyTotals[monthStr] += exp.amount;
-                    }
-                });
-                timeLabels = Object.keys(monthlyTotals);
-                spendingDataByCategories['Total'] = Object.values(monthlyTotals);
-
+                 const monthlyTotals = {};
+                 for (let i = 11; i >= 0; i--) {
+                     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                     monthlyTotals[d.toLocaleString('default', { month: 'short', year: 'numeric' })] = 0;
+                 }
+                 filteredExpenses.forEach(exp => {
+                     const monthStr = new Date(exp.timestamp).toLocaleString('default', { month: 'short', year: 'numeric' });
+                     if (monthlyTotals.hasOwnProperty(monthStr)) monthlyTotals[monthStr] += exp.amount;
+                 });
+                 timeLabels = Object.keys(monthlyTotals);
+                 spendingDataByCategories['Total'] = Object.values(monthlyTotals);
             } else if (period === 'yearly') {
                 const yearlyTotals = {};
-                for (let i = 4; i >= 0; i--) {
-                    const year = now.getFullYear() - i;
-                    yearlyTotals[year] = 0;
-                }
+                for (let i = 4; i >= 0; i--) yearlyTotals[now.getFullYear() - i] = 0;
                 filteredExpenses.forEach(exp => {
                     const year = new Date(exp.timestamp).getFullYear();
-                    if (yearlyTotals.hasOwnProperty(year)) {
-                        yearlyTotals[year] += exp.amount;
-                    }
+                    if (yearlyTotals.hasOwnProperty(year)) yearlyTotals[year] += exp.amount;
                 });
                 timeLabels = Object.keys(yearlyTotals);
                 spendingDataByCategories['Total'] = Object.values(yearlyTotals);
@@ -731,7 +684,7 @@
                 label: category,
                 data: spendingDataByCategories[category],
                 borderColor: colors[category] || '#9CA3AF',
-                backgroundColor: (colors[category] || '#9CA3AF') + '33', // 20% opacity
+                backgroundColor: (colors[category] || '#9CA3AF') + '33',
                 tension: 0.1,
                 fill: true
             }));
@@ -739,89 +692,14 @@
             const labels = Object.keys(reportByCategory);
             const data = Object.values(reportByCategory);
 
-            if (expensePieChart) {
-                expensePieChart.destroy();
-            }
-
-            // Create a pie chart
-            const pieCtx = expensePieChartCanvas.getContext('2d');
-            expensePieChart = new Chart(pieCtx, {
-                type: 'pie',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        data: data,
-                        backgroundColor: [
-                            '#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#6366F1', '#EC4899', '#9CA3AF'
-                        ],
-                        borderColor: bodyElement.classList.contains('dark-theme') ? '#1f2937' : '#ffffff',
-                        borderWidth: 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            labels: {
-                                color: bodyElement.classList.contains('dark-theme') ? '#f9fafb' : '#1f2937',
-                            }
-                        },
-                        tooltip: {
-                            titleColor: bodyElement.classList.contains('dark-theme') ? '#f9fafb' : '#1f2937',
-                            bodyColor: bodyElement.classList.contains('dark-theme') ? '#f9fafb' : '#1f2937',
-                            backgroundColor: bodyElement.classList.contains('dark-theme') ? 'rgba(31, 41, 55, 0.8)' : 'rgba(255, 255, 255, 0.8)',
-                            borderColor: bodyElement.classList.contains('dark-theme') ? '#4b5563' : '#d1d5db',
-                            borderWidth: 1,
-                            boxPadding: 5,
-                        }
-                    }
-                }
-            });
+            if (expensePieChart) expensePieChart.destroy();
+            expensePieChart = new Chart(expensePieChartCanvas.getContext('2d'), { type: 'pie', data: { labels, datasets: [{ data, backgroundColor: Object.values(colors), borderColor: bodyElement.classList.contains('dark-theme') ? '#1f2937' : '#ffffff', borderWidth: 2 }] }, options: { responsive: true, plugins: { legend: { labels: { color: bodyElement.classList.contains('dark-theme') ? '#f9fafb' : '#1f2937' } } } } });
             
-            if (expenseLineChart) {
-                expenseLineChart.destroy();
-            }
-
-            // Create a line chart
-            const lineCtx = expenseLineChartCanvas.getContext('2d');
-            expenseLineChart = new Chart(lineCtx, {
-                type: 'line',
-                data: {
-                    labels: timeLabels,
-                    datasets: datasets
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            labels: {
-                                color: bodyElement.classList.contains('dark-theme') ? '#f9fafb' : '#1f2937',
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            title: {
-                                display: true,
-                                text: period === 'daily' ? 'Time (Hours)' : (period === 'weekly' ? 'Days of the Week' : 'Time Period'),
-                                color: bodyElement.classList.contains('dark-theme') ? '#f9fafb' : '#1f2937'
-                            },
-                            ticks: { color: bodyElement.classList.contains('dark-theme') ? '#f9fafb' : '#1f2937' },
-                            grid: { color: bodyElement.classList.contains('dark-theme') ? '#4b5563' : '#d1d5db' }
-                        },
-                        y: {
-                            title: {
-                                display: true,
-                                text: 'Amount Spent (₱)',
-                                color: bodyElement.classList.contains('dark-theme') ? '#f9fafb' : '#1f2937'
-                            },
-                            beginAtZero: true,
-                            ticks: { color: bodyElement.classList.contains('dark-theme') ? '#f9fafb' : '#1f2937' },
-                            grid: { color: bodyElement.classList.contains('dark-theme') ? '#4b5563' : '#d1d5db' }
-                        }
-                    }
-                }
-            });
+            if (expenseLineChart) expenseLineChart.destroy();
+            expenseLineChart = new Chart(expenseLineChartCanvas.getContext('2d'), { type: 'line', data: { labels: timeLabels, datasets }, options: { responsive: true, scales: { x: { title: { display: true, text: 'Time' } }, y: { title: { display: true, text: 'Amount (₱)' }, beginAtZero: true } } } });
+            
+            updateChartTheme(expensePieChart);
+            updateChartTheme(expenseLineChart);
         }
         
         reportTimePeriodSelect.addEventListener('change', () => generateReport(allExpenses));
@@ -829,14 +707,14 @@
         // Function to load the user's budget from Firestore
         async function loadBudget(userId) {
             if (!userId) return;
-            const budgetDocPath = `/artifacts/${__app_id}/users/${userId}/budget/monthlyBudget`;
+            const budgetDocRef = doc(db, 'artifacts', __app_id, 'users', userId, 'budget', 'monthlyBudget');
             try {
-                const docSnap = await getDoc(doc(db, budgetDocPath));
+                const docSnap = await getDoc(budgetDocRef);
                 if (docSnap.exists()) {
                     monthlyBudget = docSnap.data().amount;
                     monthlyBudgetInput.value = monthlyBudget;
                 } else {
-                    monthlyBudget = 0; // Reset to 0 if no budget is found
+                    monthlyBudget = 0;
                 }
                 updateBudgetUI(allExpenses);
             } catch (error) {
@@ -846,6 +724,7 @@
 
         // Function to update the budget UI (progress bar and totals)
         function updateBudgetUI(expenses) {
+            if (!budgetMessage) return; // Guard against the element not being found
             const now = new Date();
             const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
             
@@ -854,7 +733,7 @@
                 .reduce((sum, exp) => sum + exp.amount, 0);
 
             monthlySpentSpan.textContent = `₱${monthlySpent.toFixed(2)}`;
-            budgetAmountSpan.textContent = `₱${monthlyBudget.toFixed(2)}`;
+            budgetAmountSpan.textContent = `₱${Number(monthlyBudget).toFixed(2)}`;
 
             if (monthlyBudget > 0) {
                 const percentage = (monthlySpent / monthlyBudget) * 100;
@@ -862,25 +741,21 @@
                 if (percentage >= 100) {
                     colorClass = 'bg-red-500';
                     budgetMessage.textContent = "You have exceeded your budget!";
-                    budgetMessage.classList.remove('text-muted', 'text-green-600');
-                    budgetMessage.classList.add('text-red-500');
+                    budgetMessage.className = 'text-sm mt-2 text-center text-red-500';
                 } else if (percentage >= 80) {
                     colorClass = 'bg-yellow-500';
                     budgetMessage.textContent = "Getting close to your budget limit.";
-                    budgetMessage.classList.remove('text-muted', 'text-red-500');
-                    budgetMessage.classList.add('text-yellow-500');
+                    budgetMessage.className = 'text-sm mt-2 text-center text-yellow-500';
                 } else {
                     budgetMessage.textContent = "You're doing great with your budget!";
-                    budgetMessage.classList.remove('text-red-500', 'text-yellow-500');
-                    budgetMessage.classList.add('text-muted');
+                    budgetMessage.className = 'text-sm mt-2 text-center text-muted';
                 }
                 
                 budgetProgressBar.className = `h-4 rounded-full transition-all duration-500 ${colorClass}`;
                 budgetProgressBar.style.width = `${Math.min(percentage, 100)}%`;
             } else {
                 budgetMessage.textContent = "Set a budget to start tracking!";
-                budgetMessage.classList.remove('text-red-500', 'text-yellow-500');
-                budgetMessage.classList.add('text-muted');
+                budgetMessage.className = 'text-sm mt-2 text-center text-muted';
                 budgetProgressBar.style.width = '0%';
                 budgetProgressBar.className = `h-4 rounded-full transition-all duration-500 bg-blue-600`;
             }
@@ -889,20 +764,13 @@
         // Add a new expense to Firestore
         addExpenseForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            if (!currentUserId) {
-                showMessage("Authentication Error", "Please log in to add expenses.");
-                return;
-            }
+            if (!currentUserId) return;
             const amount = addExpenseForm['expense-amount'].value;
             const category = addExpenseForm['expense-category'].value;
             const description = addExpenseForm['expense-description'].value;
             try {
-                const expensesCollectionPath = `/artifacts/${__app_id}/users/${currentUserId}/expenses`;
-                await addDoc(collection(db, expensesCollectionPath), {
-                    amount: parseFloat(amount),
-                    category: category,
-                    description: description,
-                    timestamp: new Date().toISOString()
+                await addDoc(collection(db, 'artifacts', __app_id, 'users', currentUserId, 'expenses'), {
+                    amount: parseFloat(amount), category, description, timestamp: new Date().toISOString()
                 });
                 addExpenseForm.reset();
             } catch (error) {
@@ -914,54 +782,59 @@
         // Save the budget to Firestore
         setBudgetForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            if (!currentUserId) {
-                showMessage("Authentication Error", "Please log in to set a budget.");
-                return;
-            }
+            if (!currentUserId) return;
             const budget = parseFloat(monthlyBudgetInput.value);
             if (isNaN(budget) || budget <= 0) {
                 showMessage("Invalid Budget", "Please enter a valid amount greater than 0.");
                 return;
             }
             try {
-                const budgetDocPath = `/artifacts/${__app_id}/users/${currentUserId}/budget/monthlyBudget`;
-                await setDoc(doc(db, budgetDocPath), { amount: budget });
+                const budgetDocRef = doc(db, 'artifacts', __app_id, 'users', currentUserId, 'budget', 'monthlyBudget');
+                await setDoc(budgetDocRef, { amount: budget });
                 monthlyBudget = budget;
                 updateBudgetUI(allExpenses);
-                showMessage("Success", "Monthly budget has been saved!");
+                showMessage("Success", "Monthly budget has been updated!");
             } catch (error) {
                 console.error("Error saving budget:", error);
                 showMessage("Error", "Failed to save budget. Please try again.");
             }
         });
 
-        // Delete an expense
-        expensesList.addEventListener('click', async (e) => {
-            if (e.target.closest('.delete-btn')) {
-                const docId = e.target.closest('.delete-btn').dataset.id;
-                if (!currentUserId) {
-                    showMessage("Authentication Error", "Please log in to delete expenses.");
-                    return;
-                }
-                try {
-                    const expensesCollectionPath = `/artifacts/${__app_id}/users/${currentUserId}/expenses`;
-                    await deleteDoc(doc(db, expensesCollectionPath, docId));
-                } catch (error) {
-                    console.error("Error deleting expense: ", error);
-                    showMessage("Error", "Failed to delete expense. Please try again.");
-                }
+        // Event listener for delete buttons in the expense list
+        expensesList.addEventListener('click', (e) => {
+            const deleteBtn = e.target.closest('.delete-btn');
+            if (deleteBtn) {
+                expenseIdToDelete = deleteBtn.dataset.id;
+                showModal('confirmationModal');
             }
+        });
+
+        // Event listener for the final delete confirmation
+        confirmDeleteBtn.addEventListener('click', async () => {
+            if (!expenseIdToDelete || !currentUserId) return;
+            try {
+                await deleteDoc(doc(db, 'artifacts', __app_id, 'users', currentUserId, 'expenses', expenseIdToDelete));
+                // The onSnapshot listener will handle the UI update automatically.
+            } catch (error) {
+                console.error("Error deleting expense: ", error);
+                showMessage("Error", "Failed to delete expense. Please try again.");
+            } finally {
+                hideModal('confirmationModal');
+                expenseIdToDelete = null;
+            }
+        });
+
+        cancelDeleteBtn.addEventListener('click', () => {
+            hideModal('confirmationModal');
+            expenseIdToDelete = null;
         });
         
         // Logout user
         logoutBtn.addEventListener('click', async () => {
             try {
                 await signOut(auth);
-                console.log("User logged out successfully.");
-                // onAuthStateChanged will handle the redirection back to index.html
             } catch (error) {
                 console.error("Logout failed:", error);
-                showMessage("Logout Failed", "An error occurred during logout. Please try again.");
             }
         });
 
@@ -970,85 +843,100 @@
 
         ratingStars.addEventListener('click', (e) => {
             const star = e.target.closest('i');
-            if (star) {
-                const rating = parseInt(star.dataset.rating);
-                currentRating = rating;
-                feedbackRatingInput.value = rating;
-                updateStarColors(rating);
-            }
-        });
-
-        function updateStarColors(rating) {
+            if (!star) return;
+            currentRating = parseInt(star.dataset.rating);
+            feedbackRatingInput.value = currentRating;
             const stars = ratingStars.querySelectorAll('i');
-            stars.forEach((star) => {
-                if (parseInt(star.dataset.rating) <= rating) {
-                    star.classList.remove('text-gray-400');
-                    star.classList.add('text-yellow-400');
-                } else {
-                    star.classList.remove('text-yellow-400');
-                    star.classList.add('text-gray-400');
-                }
+            stars.forEach(s => {
+                s.classList.toggle('text-yellow-400', parseInt(s.dataset.rating) <= currentRating);
+                s.classList.toggle('text-gray-400', parseInt(s.dataset.rating) > currentRating);
             });
-        }
+        });
 
         feedbackForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            if (!currentUserId) {
-                showMessage("Authentication Error", "Please log in to submit feedback.");
-                return;
-            }
-            if (currentRating === 0) {
-                showMessage("Rating Required", "Please select a rating before submitting.");
-                return;
-            }
-            const comment = feedbackCommentInput.value;
-            const feedbackCollectionPath = `/artifacts/${__app_id}/public/data/feedback`;
+            if (!currentUserId || currentRating === 0) return;
             try {
-                await addDoc(collection(db, feedbackCollectionPath), {
-                    rating: currentRating,
-                    comment: comment,
-                    timestamp: new Date().toISOString(),
-                    userEmail: auth.currentUser.email
+                await addDoc(collection(db, `artifacts/${__app_id}/public/data/feedback`), {
+                    rating: currentRating, 
+                    comment: feedbackCommentInput.value, 
+                    timestamp: new Date().toISOString(), 
+                    userEmail: auth.currentUser.email,
+                    userId: currentUserId // Save the user's ID
                 });
-                showMessage("Thank you!", "Your feedback has been submitted successfully.");
+                showMessage("Thank you!", "Your feedback has been submitted.");
                 feedbackForm.reset();
                 currentRating = 0;
-                updateStarColors(0);
+                ratingStars.querySelectorAll('i').forEach(s => {
+                    s.classList.remove('text-yellow-400');
+                    s.classList.add('text-gray-400');
+                });
             } catch (error) {
                 console.error("Error submitting feedback:", error);
-                showMessage("Error", "Failed to submit feedback. Please try again.");
             }
         });
 
         function setupRealtimeFeedbackListener() {
-            const feedbackCollectionPath = `/artifacts/${__app_id}/public/data/feedback`;
-            const q = query(collection(db, feedbackCollectionPath), orderBy("timestamp", "desc"));
+            const q = query(collection(db, `artifacts/${__app_id}/public/data/feedback`), orderBy("timestamp", "desc"));
             onSnapshot(q, (snapshot) => {
                 feedbackList.innerHTML = '';
-                if (snapshot.empty) {
-                    noFeedbackMessage.classList.remove('hidden');
-                } else {
-                    noFeedbackMessage.classList.add('hidden');
-                    snapshot.forEach((doc) => {
-                        const feedback = doc.data();
-                        const li = document.createElement('li');
-                        li.className = 'p-4 rounded-xl card shadow-sm';
-                        li.innerHTML = `
-                            <div class="flex items-center mb-2">
-                                ${Array(feedback.rating).fill('<i class="fas fa-star text-yellow-400"></i>').join('')}
-                                ${Array(5 - feedback.rating).fill('<i class="far fa-star text-gray-400"></i>').join('')}
-                            </div>
-                            <p class="text-secondary text-sm mb-2">${feedback.comment}</p>
-                            <p class="text-xs text-muted">by ${feedback.userEmail || 'Anonymous'} on ${new Date(feedback.timestamp).toLocaleDateString()}</p>
-                        `;
-                        feedbackList.appendChild(li);
-                    });
-                }
-            }, (error) => {
-                console.error("Error getting feedback: ", error);
+                noFeedbackMessage.classList.toggle('hidden', !snapshot.empty);
+                snapshot.forEach((doc) => {
+                    const feedback = doc.data();
+                    const li = document.createElement('li');
+                    li.className = 'p-4 rounded-xl card shadow-sm';
+                    const starsHTML = Array(5).fill(0).map((_, i) => 
+                        `<i class="fas fa-star ${i < feedback.rating ? 'text-yellow-400' : 'text-gray-400'}"></i>`
+                    ).join('');
+
+                    const isOwner = feedback.userId && feedback.userId === currentUserId;
+
+                    li.innerHTML = `
+                        <div class="flex justify-between items-start">
+                             <div>
+                                <div class="flex items-center mb-2">${starsHTML}</div>
+                                <p class="text-secondary text-sm mb-2">${feedback.comment}</p>
+                                <p class="text-xs text-muted">by ${feedback.userEmail || 'Anonymous'} on ${new Date(feedback.timestamp).toLocaleDateString()}</p>
+                             </div>
+                             ${isOwner ? `<button data-id="${doc.id}" class="feedback-delete-btn text-red-500 hover:text-red-700 transition duration-300 ml-4 flex-shrink-0">
+                                            <i class="fas fa-trash-alt"></i>
+                                         </button>` : ''}
+                        </div>
+                    `;
+                    feedbackList.appendChild(li);
+                });
             });
         }
+
+        feedbackList.addEventListener('click', (e) => {
+            const deleteBtn = e.target.closest('.feedback-delete-btn');
+            if (deleteBtn) {
+                feedbackIdToDelete = deleteBtn.dataset.id;
+                showModal('feedbackConfirmationModal');
+            }
+        });
+
+        confirmFeedbackDeleteBtn.addEventListener('click', async () => {
+            if (!feedbackIdToDelete || !currentUserId) return;
+            try {
+                const feedbackDocRef = doc(db, `artifacts/${__app_id}/public/data/feedback`, feedbackIdToDelete);
+                await deleteDoc(feedbackDocRef);
+                showMessage("Success", "Your feedback has been deleted.");
+            } catch (error) {
+                console.error("Error deleting feedback: ", error);
+                showMessage("Error", "Failed to delete feedback. Please try again.");
+            } finally {
+                hideModal('feedbackConfirmationModal');
+                feedbackIdToDelete = null;
+            }
+        });
+
+        cancelFeedbackDeleteBtn.addEventListener('click', () => {
+            hideModal('feedbackConfirmationModal');
+            feedbackIdToDelete = null;
+        });
 
     </script>
 </body>
 </html>
+
